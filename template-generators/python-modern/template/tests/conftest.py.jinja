@@ -1,0 +1,73 @@
+"""Test configuration and fixtures for {{ project_name }}."""
+
+import pytest
+{% if project_type == "web-api" or project_type == "agentic-ai" -%}
+from fastapi.testclient import TestClient
+{% endif -%}
+{% if testing_framework == "comprehensive" or testing_framework == "enterprise" -%}
+from hypothesis import settings as hypothesis_settings
+{% endif -%}
+
+{% if project_type == "web-api" or project_type == "agentic-ai" -%}
+from {{ project_slug.replace('-', '_') }}.main import app
+
+
+@pytest.fixture
+def client():
+    """Create test client for FastAPI app."""
+    return TestClient(app)
+
+{% endif -%}
+
+{% if project_type == "game-development" -%}
+import pygame
+
+
+@pytest.fixture(scope="session", autouse=True)
+def pygame_init():
+    """Initialize pygame for testing."""
+    pygame.init()
+    yield
+    pygame.quit()
+
+{% endif -%}
+
+{% if testing_framework == "comprehensive" or testing_framework == "enterprise" -%}
+# Configure Hypothesis for property-based testing
+hypothesis_settings.register_profile("ci", max_examples=1000, deadline=None)
+hypothesis_settings.register_profile("dev", max_examples=10)
+
+# Load profile based on environment
+import os
+hypothesis_settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "dev"))
+
+{% endif -%}
+
+{% if "postgresql" in databases -%}
+@pytest.fixture
+async def db_session():
+    """Create database session for testing."""
+    # This would typically use a test database
+    # Implementation depends on your specific database setup
+    pass
+
+{% endif -%}
+
+{% if "redis" in databases -%}
+@pytest.fixture
+async def redis_client():
+    """Create Redis client for testing."""
+    # This would typically use a test Redis instance
+    pass
+
+{% endif -%}
+
+@pytest.fixture
+def sample_data():
+    """Provide sample data for tests."""
+    return {
+        "test_string": "hello world",
+        "test_number": 42,
+        "test_list": [1, 2, 3],
+        "test_dict": {"key": "value"}
+    }

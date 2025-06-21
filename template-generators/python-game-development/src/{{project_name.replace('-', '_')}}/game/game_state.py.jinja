@@ -1,0 +1,57 @@
+"""Game state management for tracking game progress and data."""
+
+from typing import Any, Dict
+from {{ project_name | replace('-', '_') }}.core.constants import GameState as GameStateEnum
+
+
+class GameState:
+    """
+    Manages the current state of the game including board, players, and game status.
+
+    This class tracks:
+    - Current game phase (menu, playing, paused, etc.)
+    - Game data and progress
+    - Update timing and frame information
+    """
+
+    def __init__(self) -> None:
+        """Initialize game state with default values."""
+        self.current_state = GameStateEnum.MENU
+        self.data: Dict[str, Any] = {}
+        self.frame_count = 0
+        self.total_time = 0.0
+
+    def update(self, dt: float) -> None:
+        """
+        Update game state for one frame.
+
+        Args:
+            dt: Delta time since last frame in seconds
+        """
+        self.frame_count += 1
+        self.total_time += dt
+
+    def set_state(self, new_state: GameStateEnum) -> None:
+        """
+        Change the current game state.
+
+        Args:
+            new_state: The new game state to transition to
+        """
+        self.current_state = new_state
+
+    def get_state(self) -> GameStateEnum:
+        """
+        Get the current game state.
+
+        Returns:
+            Current game state enum value
+        """
+        return self.current_state
+
+    def reset(self) -> None:
+        """Reset game state to initial values."""
+        self.current_state = GameStateEnum.MENU
+        self.data.clear()
+        self.frame_count = 0
+        self.total_time = 0.0

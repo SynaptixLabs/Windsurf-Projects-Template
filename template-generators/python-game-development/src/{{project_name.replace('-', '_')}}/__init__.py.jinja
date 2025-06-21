@@ -1,0 +1,25 @@
+"""
+{{project_name}} - A {{game_framework}} game built with modern Python tooling.
+
+{{project_description}}
+"""
+
+__version__ = "0.1.0"
+__author__ = "{{author_name}}"
+__email__ = "{{author_email}}"
+
+# Import main components for easy access
+from .config.game_settings import settings
+from .core.constants import GameState, PlayerType, PieceType, GameResult
+from .core.exceptions import GameError, InvalidMoveError, GameStateError
+
+__all__ = [
+    "settings",
+    "GameState", 
+    "PlayerType",
+    "PieceType", 
+    "GameResult",
+    "GameError",
+    "InvalidMoveError",
+    "GameStateError",
+]

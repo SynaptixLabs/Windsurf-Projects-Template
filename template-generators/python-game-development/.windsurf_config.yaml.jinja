@@ -1,0 +1,191 @@
+# .windsurf_config.yaml
+# {{project_name}} - Game Development Team Configuration
+# Updated for {{game_framework}} game development structure
+
+assistants:
+  - name: Game_Architect
+    description: Manages project infrastructure, CI/CD, Poetry configuration, game architecture design, and core project management. Responsible for performance optimization, build systems, and technical architecture decisions.
+    scope:
+      - .github/workflows/**
+      - docker-compose.yml
+      - Dockerfile
+      - .env.example
+      - .gitignore
+      - pyproject.toml
+      - poetry.lock
+      - .pre-commit-config.yaml
+      - .windsurfrules
+      - .windsurf_config.yaml
+      - scripts/**
+      - docs/architecture.md
+      - docs/performance.md
+
+  - name: Game_Logic_Developer
+    description: Manages core game mechanics, rules implementation, game state management, and win condition logic. Responsible for the fundamental gameplay systems, board mechanics, and turn-based logic.
+    scope:
+      - src/{{project_name.replace('-', '_')}}/core/**
+      - src/{{project_name.replace('-', '_')}}/game/**
+      - src/{{project_name.replace('-', '_')}}/models/**
+      - src/{{project_name.replace('-', '_')}}/config/game_settings.py
+
+  - name: Rendering_Developer  
+    description: Manages {{game_framework}} rendering systems, graphics, animations, sprite management, and visual effects. Responsible for smooth 60fps performance, visual polish, and rendering optimization.
+    scope:
+      - src/{{project_name.replace('-', '_')}}/ui/**
+      - src/{{project_name.replace('-', '_')}}/rendering/**
+      - src/{{project_name.replace('-', '_')}}/graphics/**
+      - src/{{project_name.replace('-', '_')}}/animations/**
+      - assets/images/**
+      - assets/sprites/**
+
+  - name: Input_Audio_Developer
+    description: Manages input handling, event processing, audio systems, sound effects, and music integration. Responsible for responsive controls, audio feedback, and accessibility features.
+    scope:
+      - src/{{project_name.replace('-', '_')}}/input/**
+      - src/{{project_name.replace('-', '_')}}/audio/**
+      - src/{{project_name.replace('-', '_')}}/events/**
+      - assets/audio/**
+      - assets/music/**
+
+  - name: AI_Player_Developer
+    description: Manages AI opponent implementation, difficulty levels, move calculation algorithms, and AI strategy systems. Responsible for creating challenging and fair AI opponents.
+    scope:
+      - src/{{project_name.replace('-', '_')}}/ai/**
+      - src/{{project_name.replace('-', '_')}}/strategies/**
+      - src/{{project_name.replace('-', '_')}}/algorithms/**
+
+  - name: UI_Menu_Developer
+    description: Manages user interface systems, menu screens, settings panels, and user experience design. Responsible for intuitive navigation, accessibility, and responsive UI elements.
+    scope:
+      - src/{{project_name.replace('-', '_')}}/menus/**
+      - src/{{project_name.replace('-', '_')}}/widgets/**
+      - src/{{project_name.replace('-', '_')}}/screens/**
+      - src/{{project_name.replace('-', '_')}}/dialogs/**
+
+  - name: QA_Test_Engineer
+    description: Manages all testing infrastructure, game testing, performance testing, visual regression testing, and quality assurance. Responsible for comprehensive test coverage and quality gates.
+    scope:
+      - tests/**
+      - pytest.ini
+      - conftest.py
+      - .coverage
+      - coverage.xml
+      - benchmarks/**
+
+  - name: Game_Designer_Docs
+    description: Manages game design documentation, user guides, gameplay tutorials, and project documentation. Responsible for clear documentation of game rules, mechanics, and development processes.
+    scope:
+      - docs/**
+      - README.md
+      - CONTRIBUTING.md
+      - CHANGELOG.md
+      - LICENSE
+      - docs/game_design.md
+      - docs/gameplay.md
+
+# Global project configuration
+project_config:
+  python_version: "{{python_version}}"
+  game_framework: "{{game_framework}}"
+  target_fps: 60
+  code_style: "ruff + mypy"
+  testing_framework: "pytest"
+  documentation_tool: "sphinx"
+
+  # Game development guidelines
+  guidelines:
+    - "Maintain 60fps performance as top priority"
+    - "Use event-driven architecture for game systems"
+    - "Implement immutable game state for debugging/replay"
+    - "Follow {{game_framework}} best practices for resource management"
+    - "Use Pydantic models for all game data structures"
+    - "Implement comprehensive error handling with custom exceptions"
+    - "Use structured logging with performance metrics"
+    - "Optimize for smooth animations and responsive input"
+    - "Write visual regression tests for UI components"
+    - "Profile performance regularly during development"
+
+  # Quality standards
+  quality_gates:
+    performance: "60fps sustained gameplay"
+    unit_test_coverage: ">85%"
+    integration_test_coverage: ">75%"
+    visual_test_coverage: ">60%"
+    memory_usage: "No leaks during 30min gameplay"
+    code_quality_tools:
+      - "ruff (linting and formatting)"
+      - "mypy (type checking)"
+      - "pytest (testing)"
+      - "cProfile (performance profiling)"
+
+  # Game-specific boundaries
+  system_boundaries:
+    - "Clear separation between game logic and rendering"
+    - "Input handling isolated from game state changes"
+    - "Audio system independent of core gameplay"
+    - "AI system pluggable with different difficulty levels"
+    - "UI systems loosely coupled to game state"
+    - "Save/load functionality separate from core logic"
+
+  # Development workflow
+  sprint_process:
+    - "Sprint duration: {{sprint_duration_weeks}} weeks"
+    - "Performance testing before sprint completion"
+    - "Visual regression testing for UI changes"
+    - "Playtesting sessions for game balance"
+    - "Git tagging for each playable milestone"
+    - "Frame rate profiling in CI/CD pipeline"
+
+# Game-specific tool configurations
+tool_configs:
+  {{game_framework}}:
+    display_flags: ["DOUBLEBUF", "HWSURFACE"]
+    image_formats: ["PNG", "JPG"]
+    audio_frequency: 44100
+    audio_size: -16
+    audio_channels: 2
+    audio_buffer: 1024
+
+  ruff:
+    target_version: "py{{python_version.replace('.', '')}}"
+    line_length: 88
+    select: ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "PL", "SIM"]
+
+  pytest:
+    testpaths: ["tests"]
+    python_files: ["test_*.py", "*_test.py"]
+    python_classes: ["Test*"]
+    python_functions: ["test_*"]
+    markers:
+      - "unit: Unit tests for game logic"
+      - "integration: Integration tests"
+      - "visual: Visual/UI regression tests"
+      - "performance: Performance and benchmarking tests"
+      - "ai: AI behavior and strategy tests"
+      - "gameplay: End-to-end gameplay tests"
+
+  mypy:
+    python_version: "{{python_version}}"
+    warn_return_any: true
+    warn_unused_configs: true
+    disallow_untyped_defs: true
+    strict_optional: true
+
+# Performance monitoring
+performance_config:
+  target_metrics:
+    fps: ">= 60"
+    frame_time: "<= 16.67ms"
+    memory_usage: "<= 200MB"
+    startup_time: "<= 3s"
+    
+  profiling:
+    enabled: true
+    interval: "5s"
+    metrics: ["fps", "memory", "cpu", "gpu"]
+    
+  optimization_priorities:
+    - "Rendering pipeline efficiency"
+    - "Game state update performance"
+    - "Memory allocation patterns"
+    - "Asset loading optimization"

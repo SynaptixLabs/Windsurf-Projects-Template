@@ -1,0 +1,221 @@
+[tool.poetry]
+name = "{{ project_slug }}"
+version = "0.1.0"
+description = "{{ project_description }}"
+authors = ["{{ author_name }} <{{ author_email }}>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "{{ project_slug.replace('-', '_') }}", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^{{ python_version }}"
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+structlog = "^23.2.0"
+rich = "^13.7.0"
+typer = {extras = ["all"], version = "^0.12.0"}
+
+{% if project_type == "web-api" or project_type == "agentic-ai" -%}
+# Web API dependencies
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+{% endif -%}
+
+{% if project_type == "agentic-ai" -%}
+# Agentic AI dependencies  
+crewai = "^0.22.0"
+crewai-tools = "^0.4.0"
+{% if "chromadb" in databases -%}
+chromadb = "^0.4.0"
+{% endif -%}
+{% if "pinecone" in databases -%}
+pinecone-client = "^3.0.0"
+{% endif -%}
+{% endif -%}
+
+{% if project_type == "data-science" -%}
+# Data Science dependencies
+polars = "^0.20.0"
+duckdb = "^0.9.0"
+pyarrow = "^14.0.0"
+{% if orchestration_tool == "prefect" -%}
+prefect = "^2.14.0"
+{% elif orchestration_tool == "airflow" -%}
+apache-airflow = "^2.7.0"
+{% endif -%}
+{% endif -%}
+
+{% if project_type == "game-development" -%}
+# Game Development dependencies
+pygame = "^2.5.0"
+{% endif -%}
+
+{% if "postgresql" in databases -%}
+# PostgreSQL async support
+asyncpg = "^0.29.0"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.0"}
+{% endif -%}
+
+{% if "mongodb" in databases -%}
+# MongoDB async support
+motor = "^3.3.0"
+{% endif -%}
+
+{% if "redis" in databases -%}
+# Redis async support
+redis = {extras = ["hiredis"], version = "^5.0.0"}
+{% endif -%}
+
+[tool.poetry.group.dev.dependencies]
+# Testing - Modern 2025 stack
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+pytest-benchmark = "^4.0.0"
+pytest-xdist = "^3.5.0"  # Parallel test execution
+hypothesis = "^6.92.0"   # Property-based testing
+
+{% if testing_framework == "comprehensive" or testing_framework == "enterprise" -%}
+testcontainers = "^4.0.0"  # Integration testing
+vcrpy = "^6.0.0"         # HTTP recording
+{% endif -%}
+
+{% if project_type == "web-api" or project_type == "agentic-ai" -%}
+httpx = "^0.25.0"        # Async HTTP client for testing
+{% endif -%}
+
+# Code Quality - Rust-powered tools (2025 standard)
+ruff = "^0.1.11"         # Universal linter + formatter
+mypy = "^1.8.0"          # Type checking
+{% if include_pre_commit -%}
+pre-commit = "^3.6.0"    # Git hooks
+{% endif -%}
+
+# Documentation
+{% if project_type == "web-api" or project_type == "agentic-ai" -%}
+mkdocs-material = "^9.4.0"
+mkdocstrings-python = "^1.7.0"
+{% else -%}
+sphinx = "^7.2.0"
+sphinx-autoapi = "^3.0.0"
+{% endif -%}
+
+# Development utilities
+watchfiles = "^0.21.0"   # File watching for dev mode
+
+{% if testing_framework == "enterprise" -%}
+# Enterprise testing tools
+locust = "^2.17.0"       # Performance testing
+bandit = "^1.7.0"        # Security scanning
+safety = "^2.3.0"        # Dependency vulnerability scanning
+{% endif -%}
+
+[tool.poetry.scripts]
+# Fixed: Scripts pointing to actual Python functions
+{{ project_slug.replace("-", "_") }} = "{{ project_slug.replace('-', '_') }}.main:main"
+run = "scripts.cli:run"
+dev = "scripts.cli:dev"
+lint = "scripts.cli:lint"
+test = "scripts.cli:test"
+ci = "scripts.cli:ci"
+format = "scripts.cli:format_code"
+clean = "scripts.cli:clean"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# Ruff Configuration (2025 Modern Stack)
+[tool.ruff]
+target-version = "py{{ python_version.replace('.', '') }}"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "S",   # bandit (security)
+    "PTH", # pathlib
+    "RUF", # Ruff-specific rules
+    {% if project_type == "web-api" or project_type == "agentic-ai" -%}
+    "ASYNC", # async/await patterns
+    {% endif -%}
+]
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "S101",  # Use of assert (OK in tests)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S311"]  # Allow assert and random in tests
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.mypy]
+python_version = "{{ python_version }}"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "build/",
+    "dist/",
+    "scripts/",  # CLI scripts don't need strict typing
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/{{ project_slug.replace('-', '_') }}",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under={{ coverage_threshold }}",
+    {% if testing_framework == "comprehensive" or testing_framework == "enterprise" -%}
+    "-n auto",  # Parallel test execution
+    {% endif -%}
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    {% if project_type == "agentic-ai" -%}
+    "agent: marks tests that involve AI agents",
+    {% endif -%}
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+    "scripts/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+precision = 2
+show_missing = true

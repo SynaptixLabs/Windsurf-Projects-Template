@@ -1,0 +1,251 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "{{ python_version }}"
+  {% if package_manager == "poetry" -%}
+  POETRY_VERSION: "1.8.3"
+  {% endif -%}
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python {{ python_version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: {{ python_version }}
+          
+      {% if package_manager == "poetry" -%}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: {% raw %}${{ env.POETRY_VERSION }}{% endraw %}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-{% raw %}${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}{% endraw %}
+          
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+        
+      - name: Install project
+        run: poetry install --no-interaction
+      {% else -%}
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -r pyproject.toml --all-extras
+      {% endif -%}
+        
+      - name: Run Ruff linting
+        run: |
+          {% if package_manager == "poetry" -%}
+          poetry run ruff check .
+          {% else -%}
+          source .venv/bin/activate && ruff check .
+          {% endif -%}
+          
+      - name: Run Ruff formatting check
+        run: |
+          {% if package_manager == "poetry" -%}
+          poetry run ruff format --check .
+          {% else -%}
+          source .venv/bin/activate && ruff format --check .
+          {% endif -%}
+          
+      - name: Run MyPy type checking
+        run: |
+          {% if package_manager == "poetry" -%}
+          poetry run mypy src/
+          {% else -%}
+          source .venv/bin/activate && mypy src/
+          {% endif -%}
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    
+    {% if databases -%}
+    services:
+      {% if "postgresql" in databases -%}
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      {% endif -%}
+      
+      {% if "redis" in databases -%}
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      {% endif -%}
+    {% endif -%}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python {% raw %}${{ matrix.python-version }}{% endraw %}
+        uses: actions/setup-python@v4
+        with:
+          python-version: {% raw %}${{ matrix.python-version }}{% endraw %}
+          
+      {% if package_manager == "poetry" -%}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: {% raw %}${{ env.POETRY_VERSION }}{% endraw %}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-{% raw %}${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}{% endraw %}
+          
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+        
+      - name: Install project
+        run: poetry install --no-interaction
+      {% else -%}
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -r pyproject.toml --all-extras
+      {% endif -%}
+        
+      - name: Run tests with coverage
+        run: |
+          {% if package_manager == "poetry" -%}
+          poetry run pytest --cov=src --cov-report=xml --cov-fail-under={{ coverage_threshold }}
+          {% else -%}
+          source .venv/bin/activate && pytest --cov=src --cov-report=xml --cov-fail-under={{ coverage_threshold }}
+          {% endif -%}
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  {% if testing_framework == "enterprise" -%}
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python {{ python_version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: {{ python_version }}
+          
+      {% if package_manager == "poetry" -%}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: {% raw %}${{ env.POETRY_VERSION }}{% endraw %}
+          
+      - name: Install dependencies
+        run: poetry install --no-interaction
+        
+      - name: Run Bandit security scan
+        run: poetry run bandit -r src/
+        
+      - name: Run Safety dependency scan
+        run: poetry run safety check
+      {% else -%}
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install bandit safety
+          
+      - name: Run Bandit security scan
+        run: source .venv/bin/activate && bandit -r src/
+        
+      - name: Run Safety dependency scan
+        run: source .venv/bin/activate && safety check
+      {% endif -%}
+  {% endif -%}
+
+  {% if include_docker -%}
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [quality, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: {% raw %}${{ secrets.DOCKER_USERNAME }}{% endraw %}
+          password: {% raw %}${{ secrets.DOCKER_TOKEN }}{% endraw %}
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            {% raw %}${{ secrets.DOCKER_USERNAME }}{% endraw %}/{{ project_slug }}:latest
+            {% raw %}${{ secrets.DOCKER_USERNAME }}{% endraw %}/{{ project_slug }}:{% raw %}${{ github.sha }}{% endraw %}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  {% endif -%}

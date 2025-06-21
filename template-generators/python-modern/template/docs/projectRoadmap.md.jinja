@@ -1,0 +1,140 @@
+# {{ project_name }} - Project Roadmap
+
+## Project Vision
+{{ project_description }}
+
+{% if project_type == "agentic-ai" -%}
+Create an intelligent multi-agent system using CrewAI for {{ project_description.lower() }}.
+
+## Key Features
+- Multi-agent collaboration with role-based design
+- {{ crewai_features | join(', ') }}
+- FastAPI integration for external access
+{% if databases -%}
+- Database integration: {{ databases | join(', ') }}
+{% endif -%}
+{% elif project_type == "web-api" -%}
+Build a high-performance web API using FastAPI for {{ project_description.lower() }}.
+
+## Key Features
+- RESTful API with auto-generated documentation
+- Async/await for optimal performance
+{% if include_auth -%}
+- Authentication and authorization
+{% endif -%}
+{% if databases -%}
+- Database integration: {{ databases | join(', ') }}
+{% endif -%}
+{% elif project_type == "data-science" -%}
+Develop a data science project with modern Python tooling for {{ project_description.lower() }}.
+
+## Key Features
+- High-performance data processing with Polars
+- {{ orchestration_tool | title }} for workflow orchestration
+{% if include_notebooks -%}
+- Jupyter notebooks for analysis
+{% endif -%}
+- DuckDB for analytical queries
+{% elif project_type == "game-development" -%}
+Create a {{ game_type.replace('-', ' ') }} game using Pygame for {{ project_description.lower() }}.
+
+## Key Features
+- 60 FPS target performance
+- Responsive user input handling
+{% if include_assets -%}
+- Sample game assets included
+{% endif -%}
+- Comprehensive game state management
+{% elif project_type == "cli-tool" -%}
+Build a command-line tool using Typer for {{ project_description.lower() }}.
+
+## Key Features
+- Rich CLI interface with Typer
+- Comprehensive help and documentation
+- Extensible command structure
+{% endif -%}
+
+## Sprint Breakdown
+
+### Sprint 1: Foundation & Core Setup (Current)
+- ✅ Project setup with modern {{ python_version }} tooling
+- 🔄 Core architecture implementation
+- 🔄 Pydantic models for data validation
+- 📋 Unit tests for core functionality
+
+### Sprint 2: {{ "API Development" if project_type == "web-api" else "Agent Implementation" if project_type == "agentic-ai" else "Data Pipeline" if project_type == "data-science" else "Game Mechanics" if project_type == "game-development" else "CLI Interface" }}
+{% if project_type == "web-api" -%}
+- 📋 FastAPI endpoints implementation
+- 📋 Request/response validation
+- 📋 Database integration
+- 📋 API documentation
+{% elif project_type == "agentic-ai" -%}
+- 📋 CrewAI agents development
+- 📋 Tool integration
+- 📋 Agent collaboration workflows
+- 📋 State management
+{% elif project_type == "data-science" -%}
+- 📋 Data ingestion and processing
+- 📋 Analysis workflows
+- 📋 {{ orchestration_tool | title }} pipeline setup
+- 📋 Data validation and quality checks
+{% elif project_type == "game-development" -%}
+- 📋 Game loop implementation
+- 📋 Player input handling
+- 📋 Game state management
+- 📋 Basic gameplay mechanics
+{% else -%}
+- 📋 Core functionality implementation
+- 📋 Command structure setup
+- 📋 User interface development
+- 📋 Configuration management
+{% endif -%}
+
+### Sprint 3: Advanced Features & Integration
+{% if project_type == "agentic-ai" -%}
+- 📋 Advanced agent capabilities
+- 📋 Memory and context management
+- 📋 External tool integrations
+- 📋 Performance optimization
+{% elif project_type == "web-api" -%}
+- 📋 Advanced API features
+{% if include_auth -%}
+- 📋 Authentication implementation
+{% endif -%}
+- 📋 Rate limiting and caching
+- 📋 Performance optimization
+{% elif project_type == "data-science" -%}
+- 📋 Advanced analytics
+- 📋 Model development and training
+- 📋 Data visualization
+- 📋 Pipeline optimization
+{% elif project_type == "game-development" -%}
+- 📋 Advanced game features
+- 📋 Audio and effects
+- 📋 Game progression system
+- 📋 Performance optimization
+{% else -%}
+- 📋 Advanced CLI features
+- 📋 Plugin system
+- 📋 Configuration management
+- 📋 Performance optimization
+{% endif -%}
+
+### Sprint 4: Polish & Production
+- 📋 Comprehensive testing and validation
+- 📋 Documentation completion
+- 📋 Performance benchmarking
+- 📋 Production deployment setup
+
+## Success Metrics
+- Test coverage ≥{{ coverage_threshold }}%
+- No critical security vulnerabilities
+{% if project_type == "web-api" -%}
+- API response time <200ms for most endpoints
+{% elif project_type == "game-development" -%}
+- Consistent 60 FPS performance
+{% elif project_type == "data-science" -%}
+- Pipeline execution time within target SLAs
+{% endif -%}
+- Clean, maintainable codebase
+- Comprehensive documentation

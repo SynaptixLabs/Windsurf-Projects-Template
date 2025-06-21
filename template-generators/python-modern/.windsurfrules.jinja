@@ -1,0 +1,285 @@
+# Project Local Rules for Windsurf - {{project_name}}
+
+These rules supplement the Global Operating Rules and provide {{project_type}} development specific guidelines for assistants working on this Python project.
+
+---
+
+## ⚠️ CRITICAL: Project State Management
+
+### 🔄 State Tracking Requirements (MANDATORY)
+
+**Windsurf MUST maintain project continuity by updating `state.md` after every significant milestone:**
+
+1. **State Update Triggers** (Update `state.md` immediately after):
+   - ✅ Completing any development phase or major milestone
+   - ✅ Finishing significant feature implementations
+   - ✅ Completing architectural decisions or refactoring
+   - ✅ Before ending any development session
+   - ✅ Major testing or deployment milestones
+
+2. **State Update Format** (Required in `state.md`):
+   ```markdown
+   **Last Updated**: [CURRENT_DATE_TIME]
+   **Current Phase**: [PHASE_AND_DESCRIPTION]
+   **Progress**: [BRIEF_PROGRESS_SUMMARY]
+   
+   ## Development Summary
+   [CONCISE_TEXT_SUMMARY_OF_COMPLETED_WORK]
+   
+   ## Development Status
+   - **Phase N**: [STATUS_EMOJI] [STATUS] - [BRIEF_DESCRIPTION]
+   ```
+
+3. **Session Continuation Protocol**:
+   - **Always read `state.md` first** when returning to project
+   - Provide brief summary of completed work and current objectives
+   - Resume development from exact point indicated in state
+   - **Never start from beginning** if state indicates progress
+
+**This ensures seamless development continuation across Windsurf sessions!**
+
+### 🚀 Project Initialization
+
+**First Time Setup**: When user says:
+```
+I just generated this {{project_name}} project. Please run/execute the start-coding script in .commands/start-coding.md
+```
+
+**Execute**: Follow `.commands/start-coding.md` exactly for:
+- Project structure review
+- Development planning and phase establishment
+- Environment validation  
+- State initialization
+- Core development commencement
+
+---
+
+## General Development Rules
+
+### 📌 Important Project Rules
+- **Documentation**: Always reference the primary project documentation (`docs/`) before beginning any task
+- **Quality First**: Maintain >{{coverage_threshold}}% test coverage and strict code quality standards
+- **Type Safety**: Use comprehensive type hints and MyPy strict mode compliance
+- **Testing**: Follow TDD principles where appropriate for {{project_type}} development
+
+### 🐍 Python Development Principles
+1. **Code Quality**: Use Ruff for linting/formatting, MyPy for type checking
+2. **Modern Python**: Leverage Python {{python_version}} features and best practices
+3. **Dependencies**: Use {{package_manager}} for dependency management and virtual environments
+4. **Documentation**: Comprehensive docstrings and inline documentation
+5. **Testing**: pytest with coverage tracking and property-based testing where beneficial
+
+---
+
+## {{project_type.title()}} Specific Guidelines
+
+{% if project_type == "web-api" -%}
+### 🌐 Web API Development Standards
+
+1. **FastAPI Patterns**:
+   ```python
+   # Use dependency injection for services
+   from fastapi import Depends
+   
+   async def get_service() -> UserService:
+       return UserService()
+   
+   @app.post("/users/")
+   async def create_user(
+       user: UserCreate,
+       service: UserService = Depends(get_service)
+   ) -> UserResponse:
+       return await service.create_user(user)
+   ```
+
+2. **Data Validation**:
+   ```python
+   # Use Pydantic models for request/response
+   from pydantic import BaseModel, Field
+   
+   class UserCreate(BaseModel):
+       email: str = Field(..., description="User email address")
+       name: str = Field(..., min_length=1, max_length=100)
+   ```
+
+3. **Error Handling**:
+   ```python
+   # Consistent HTTP exception handling
+   from fastapi import HTTPException
+   
+   if not user:
+       raise HTTPException(
+           status_code=404,
+           detail="User not found"
+       )
+   ```
+
+{% elif project_type == "agentic-ai" -%}
+### 🤖 Agentic AI Development Standards
+
+1. **Agent Design Patterns**:
+   ```python
+   # Use CrewAI for multi-agent systems
+   from crewai import Agent, Task, Crew
+   
+   researcher = Agent(
+       role="Research Specialist",
+       goal="Gather comprehensive information",
+       backstory="Expert at finding and analyzing information",
+       tools=[search_tool, analysis_tool]
+   )
+   ```
+
+2. **Tool Integration**:
+   ```python
+   # Custom tools with proper error handling
+   from crewai_tools import BaseTool
+   
+   class CustomAnalysisTool(BaseTool):
+       name: str = "Analysis Tool"
+       description: str = "Performs data analysis"
+       
+       def _run(self, query: str) -> str:
+           # Implementation with error handling
+           pass
+   ```
+
+3. **State Management**:
+   ```python
+   # Use Pydantic for agent state
+   from pydantic import BaseModel
+   
+   class AgentState(BaseModel):
+       current_task: str
+       progress: float
+       context: dict[str, Any]
+   ```
+
+{% elif project_type == "data-science" -%}
+### 📊 Data Science Development Standards
+
+1. **Data Pipeline Design**:
+   ```python
+   # Use Polars for high-performance data processing
+   import polars as pl
+   
+   def process_data(df: pl.DataFrame) -> pl.DataFrame:
+       return (
+           df
+           .filter(pl.col("status") == "active")
+           .group_by("category")
+           .agg([
+               pl.col("value").sum().alias("total_value"),
+               pl.col("count").count().alias("record_count")
+           ])
+       )
+   ```
+
+2. **Analysis Functions**:
+   ```python
+   # Type-safe analysis functions
+   from typing import Protocol
+   
+   class DataProcessor(Protocol):
+       def process(self, data: pl.DataFrame) -> pl.DataFrame: ...
+   
+   def analyze_trends(
+       data: pl.DataFrame, 
+       processor: DataProcessor
+   ) -> dict[str, Any]:
+       processed = processor.process(data)
+       return {"trends": processed.to_dict()}
+   ```
+
+{% elif project_type == "cli-tool" -%}
+### 💻 CLI Tool Development Standards
+
+1. **Command Structure**:
+   ```python
+   # Use Typer for CLI development
+   import typer
+   from typing import Optional
+   
+   app = typer.Typer()
+   
+   @app.command()
+   def process(
+       input_file: str,
+       output: Optional[str] = typer.Option(None, help="Output file"),
+       verbose: bool = typer.Option(False, help="Verbose output")
+   ) -> None:
+       """Process the input file and generate output."""
+       pass
+   ```
+
+2. **Error Handling**:
+   ```python
+   # Graceful error handling for CLI
+   try:
+       result = process_file(input_file)
+   except FileNotFoundError:
+       typer.echo(f"Error: File '{input_file}' not found", err=True)
+       raise typer.Exit(1)
+   except Exception as e:
+       typer.echo(f"Error: {e}", err=True)
+       raise typer.Exit(1)
+   ```
+
+{% else -%}
+### 🔧 {{project_type.title()}} Development Standards
+
+1. **Clean Architecture**:
+   ```python
+   # Separate concerns clearly
+   from abc import ABC, abstractmethod
+   
+   class Repository(ABC):
+       @abstractmethod
+       def save(self, entity: Entity) -> None: ...
+   
+   class Service:
+       def __init__(self, repo: Repository):
+           self.repo = repo
+   ```
+
+2. **Error Handling**:
+   ```python
+   # Domain-specific exceptions
+   class DomainError(Exception):
+       """Base exception for domain errors."""
+       pass
+   
+   class ValidationError(DomainError):
+       """Raised when validation fails."""
+       pass
+   ```
+{% endif -%}
+
+---
+
+## Quality Standards
+
+### Code Quality Requirements
+- **Test Coverage**: >{{coverage_threshold}}% for core functionality
+- **Type Safety**: 100% MyPy compliance in strict mode
+- **Performance**: Efficient algorithms and data structures
+- **Documentation**: Comprehensive docstrings and inline documentation
+
+### Development Workflow
+1. **Quality Gates**: All commits must pass Ruff, MyPy, and pytest
+2. **Testing**: Write tests for core functionality and edge cases
+3. **Documentation**: Update docs when adding new features or changes
+4. **State Tracking**: Update `state.md` after significant progress
+
+### Best Practices
+- **Dependencies**: Keep dependencies minimal and well-justified
+- **Security**: Follow security best practices for {{project_type}} development
+- **Performance**: Profile and optimize critical paths
+- **Maintainability**: Write clear, self-documenting code
+
+---
+
+**Project Type**: {{project_type}}  
+**Python Version**: {{python_version}}  
+**Package Manager**: {{package_manager}}  
+**Quality Target**: >{{coverage_threshold}}% test coverage

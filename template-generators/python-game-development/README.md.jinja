@@ -1,0 +1,233 @@
+# {{project_name}}
+
+{{project_description}}
+
+Built with **{{game_framework}}** and modern Python tooling for production-ready game development.
+
+## 🚀 Quick Start
+
+### Generated Project Setup
+This project was generated using the enhanced Python game development template. To begin development:
+
+1. **Open in Windsurf IDE**
+   ```bash
+   cd {{project_name}}
+   windsurf .
+   ```
+
+2. **Execute Start-Coding Script**
+   
+   Use this simple prompt in Windsurf to begin:
+   
+   ```
+   I just generated this {{project_name}} project. Please run/execute the start-coding script in .commands/start-coding.md
+   ```
+   
+   Windsurf will:
+   - Execute comprehensive project initialization
+   - Configure development environment and quality gates
+   - Setup infrastructure with all dependencies
+   - Prepare structured development workflow
+   - Validate all components are working correctly
+
+3. **Follow Structured Development**
+   
+   After initialization, continue with sprint-based development:
+   ```
+   {% if use_sprint_based_todos -%}
+   I have completed initialization. Please help me begin Sprint 1 development from docs/TODO.{{project_slug}}.1.md
+   {% else -%}
+   I have completed initialization. Please help me begin developing the core functionality.
+   {% endif -%}
+   ```
+
+## 📋 Command Scripts
+
+The `.commands/` directory contains project initialization:
+
+- `.commands/start-coding.md` - Complete project initialization and development continuation
+
+The **`state.md`** file (root level) tracks project progress and enables session continuation:
+- **Updated by Windsurf** after each sprint/milestone completion
+- **Read by Windsurf** when returning to the project
+- **Ensures continuity** across development sessions
+
+This script provides Windsurf with specific, actionable instructions for setting up the development environment and maintaining project state.
+
+## 🎮 {{project_name.title()}} Game Project
+
+### Technical Requirements
+- **Framework**: {{game_framework}} for graphics and input
+- **Performance**: {{target_fps}}fps stable gameplay
+- **Testing**: Comprehensive test suite with >{{coverage_threshold}}% coverage
+- **Quality**: Modern Python tooling for production-ready development
+
+## 📊 Sprint Development Plan
+
+{% if use_sprint_based_todos -%}
+### Sprint 0: Infrastructure & Project Setup ✅
+- Complete development environment with {{package_manager}} and Python {{python_version}}
+- Quality gates (Ruff, MyPy, pytest >{{coverage_threshold}}% coverage)
+- Game constants and settings configuration
+- Git repository and CI/CD pipeline setup
+
+### Sprint 1: Core Game Logic 🔄
+- Game engine and core mechanics
+- Player management and game state
+- Rule implementation and validation
+- Performance optimization
+
+### Sprint 2: User Interface & Interaction 📋
+- {{game_framework}} rendering system
+- Input handling (mouse/keyboard)
+- Visual feedback and animations
+- Game flow and user experience
+
+### Sprint 3: Advanced Features & Polish 📋
+- AI implementation (if applicable)
+- Save/load functionality
+- Sound effects and visual polish
+- Settings and customization options
+{% else -%}
+### Development Phases
+- **Phase 1**: Core game logic and mechanics
+- **Phase 2**: User interface and interaction
+- **Phase 3**: Polish and advanced features
+{% endif -%}
+
+## 🛠 Technology Stack
+
+- **Python {{python_version}}** - Latest stable Python with performance improvements
+- **{{game_framework}}** - Mature game framework for graphics and input handling
+- **{{package_manager.title()}}** - Modern dependency management with task aliases
+- **Pydantic** - Data validation and settings management
+- **Ruff + MyPy** - Fast linting, formatting, and type checking
+- **Pytest** - Comprehensive testing with coverage tracking
+- **GitHub Actions** - CI/CD pipeline with quality gates
+
+## 📊 Development Workflow
+
+### Daily Development
+```bash
+# Start development session
+{{package_manager}} run dev              # Start game in development mode
+
+# Code quality checks
+{{package_manager}} run lint             # Run linting and formatting
+{{package_manager}} run test             # Run tests with coverage
+{{package_manager}} run ci               # Run complete CI pipeline locally
+```
+
+### Sprint Demos & Reviews
+```bash
+# Interactive demo for sprint presentations
+{{package_manager}} run demo             # Live interactive showcase
+
+# Automated demo sequences
+{{package_manager}} run demo-auto        # Scripted demo for unattended showcase
+{{package_manager}} run demo-record      # Record demo for presentations
+
+# Project status tracking
+{{package_manager}} run sprint-status    # Current sprint progress
+```
+
+See [Sprint Demo Guide](docs/SPRINT_DEMOS.md) for detailed demo instructions and best practices.
+
+### Quality-First Development
+1. **Execute Initialization**: Use `.commands/init.md` with Windsurf guidance
+2. **Quality Validation**: Ensure all tests pass and coverage >{{coverage_threshold}}%
+3. **Performance Check**: Validate {{target_fps}}fps target maintained
+4. **Continuous Integration**: Automated quality gates on every commit
+
+## 🧪 Testing & Quality
+
+### Test Structure
+```
+tests/
+├── unit/           # Unit tests for individual components
+├── integration/    # Integration tests for system interactions
+├── performance/    # Performance and benchmarking tests
+└── conftest.py     # Shared fixtures and test configuration
+```
+
+### Quality Gates
+- **Ruff**: Linting and formatting (150x faster than traditional tools)
+- **MyPy**: Static type checking with strict mode
+- **Pytest**: Unit and integration testing with coverage >{{coverage_threshold}}%
+- **Pre-commit**: Automated quality checks on commit
+- **GitHub Actions**: CI/CD pipeline with security scanning
+
+## 🎮 Game Architecture
+
+### Core Components
+- **Game Engine**: Main game loop and state management
+- **Game Logic**: Rules, validation, and mechanics
+- **Rendering System**: {{game_framework}} graphics and animations
+- **Input Handler**: User input processing and feedback
+- **Configuration**: Settings and customization management
+
+### Performance Standards
+```python
+# Performance targets
+TARGET_FPS = {{target_fps}}
+MAX_MEMORY_MB = 200
+MAX_INPUT_LATENCY_MS = 16
+MAX_STARTUP_TIME_S = 3
+```
+
+## 🔧 Configuration
+
+### Environment Setup
+Copy `.env.example` to `.env` and customize:
+
+```bash
+# Display Configuration
+WINDOW_WIDTH=800
+WINDOW_HEIGHT=600
+FPS={{target_fps}}
+
+# Development
+DEBUG_MODE=true
+SHOW_FPS=true
+```
+
+## 👥 Team Collaboration
+
+### Windsurf Assistant Roles
+- **Game_Architect**: Infrastructure, performance, CI/CD optimization
+- **Game_Logic_Developer**: Core mechanics and rules implementation
+- **Rendering_Developer**: {{game_framework}} graphics, animations, visual effects
+- **Input_Audio_Developer**: Controls, sound effects, user feedback
+- **QA_Test_Engineer**: Testing, edge cases, performance validation
+
+### Development Standards
+- **Performance First**: Maintain {{target_fps}}fps during gameplay
+- **Test-Driven**: Write tests for core logic and critical paths
+- **Type Safety**: Full MyPy compliance for robust code
+- **Quality Focus**: All development meets production standards
+
+## 🚀 Performance Targets
+
+- **Frame Rate**: Sustained {{target_fps}}fps during gameplay
+- **Memory Usage**: <200MB for complete game
+- **Input Latency**: <16ms response time
+- **Startup Time**: <3 seconds from launch to playable
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+## 🤝 Contributing
+
+1. Use `.commands/start-coding.md` for project initialization with Windsurf
+2. Follow structured development approach with state tracking
+3. Maintain {{target_fps}}fps performance and >{{coverage_threshold}}% test coverage
+4. **Windsurf must update `state.md`** after completing sprints/milestones
+5. Update documentation for any architectural changes
+
+---
+
+**Generated with**: Enhanced Python Game Development Template  
+**Framework**: {{game_framework}} {{python_version}}  
+**Quality**: Production-ready infrastructure with comprehensive testing  
+**Performance**: Optimized for {{target_fps}}fps gameplay

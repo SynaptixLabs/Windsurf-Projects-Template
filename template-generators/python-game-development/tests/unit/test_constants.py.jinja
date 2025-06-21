@@ -1,0 +1,176 @@
+"""Test game constants and enumerations."""
+
+import pytest
+
+from {{project_name.replace('-', '_')}}.core.constants import (
+    Colors,
+    GameState,
+    PlayerType,
+    PieceType,
+    GameResult,
+    AILevel,
+    AudioFiles,
+    FontSizes,
+    Layout,
+    DIRECTIONS,
+    ERROR_MESSAGES,
+    DEFAULT_WINDOW_WIDTH,
+    DEFAULT_WINDOW_HEIGHT,
+    DEFAULT_BOARD_COLS,
+    DEFAULT_BOARD_ROWS,
+    DEFAULT_CONNECT_LENGTH,
+    DEFAULT_FPS,
+)
+
+
+class TestConstants:
+    """Test basic constant values."""
+    
+    def test_default_dimensions(self):
+        """Test that default dimensions are reasonable."""
+        assert DEFAULT_WINDOW_WIDTH > 0
+        assert DEFAULT_WINDOW_HEIGHT > 0
+        assert DEFAULT_BOARD_COLS >= 4
+        assert DEFAULT_BOARD_ROWS >= 4
+        assert DEFAULT_CONNECT_LENGTH >= 3
+        assert DEFAULT_FPS > 0
+    
+    def test_colors_are_valid_rgb(self):
+        """Test that all color constants are valid RGB tuples."""
+        color_attrs = [attr for attr in dir(Colors) if not attr.startswith('_')]
+        
+        for attr_name in color_attrs:
+            color = getattr(Colors, attr_name)
+            assert isinstance(color, tuple), f"Color {attr_name} is not a tuple"
+            assert len(color) == 3, f"Color {attr_name} is not RGB (length != 3)"
+            assert all(0 <= c <= 255 for c in color), f"Color {attr_name} has invalid RGB values"
+    
+    def test_directions_are_valid(self):
+        """Test that movement directions are valid."""
+        assert len(DIRECTIONS) == 4
+        for direction in DIRECTIONS:
+            assert isinstance(direction, tuple)
+            assert len(direction) == 2
+            assert all(isinstance(d, int) for d in direction)
+
+
+class TestEnums:
+    """Test enumeration classes."""
+    
+    def test_game_state_enum(self):
+        """Test GameState enum values."""
+        assert GameState.MENU == "menu"
+        assert GameState.PLAYING == "playing"
+        assert GameState.PAUSED == "paused"
+        assert GameState.GAME_OVER == "game_over"
+        assert GameState.SETTINGS == "settings"
+        
+        # Test all values are strings
+        for state in GameState:
+            assert isinstance(state.value, str)
+    
+    def test_player_type_enum(self):
+        """Test PlayerType enum values."""
+        assert PlayerType.HUMAN == "human"
+        assert PlayerType.AI == "ai"
+        assert PlayerType.REMOTE == "remote"
+        
+        # Test all values are strings
+        for player_type in PlayerType:
+            assert isinstance(player_type.value, str)
+    
+    def test_piece_type_enum(self):
+        """Test PieceType enum values."""
+        assert PieceType.EMPTY == 0
+        assert PieceType.PLAYER_1 == 1
+        assert PieceType.PLAYER_2 == 2
+        
+        # Test all values are integers
+        for piece_type in PieceType:
+            assert isinstance(piece_type.value, int)
+    
+    def test_game_result_enum(self):
+        """Test GameResult enum values."""
+        assert GameResult.WIN_PLAYER_1 == "win_player_1"
+        assert GameResult.WIN_PLAYER_2 == "win_player_2"
+        assert GameResult.DRAW == "draw"
+        assert GameResult.ONGOING == "ongoing"
+        assert GameResult.ABORTED == "aborted"
+    
+    def test_ai_level_enum(self):
+        """Test AILevel enum values."""
+        assert AILevel.EASY == "easy"
+        assert AILevel.MEDIUM == "medium"
+        assert AILevel.HARD == "hard"
+        assert AILevel.EXPERT == "expert"
+
+
+class TestAudioFiles:
+    """Test audio file constants."""
+    
+    def test_audio_file_paths(self):
+        """Test that audio file paths are strings."""
+        audio_attrs = [attr for attr in dir(AudioFiles) if not attr.startswith('_')]
+        
+        for attr_name in audio_attrs:
+            path = getattr(AudioFiles, attr_name)
+            assert isinstance(path, str), f"Audio path {attr_name} is not a string"
+            assert len(path) > 0, f"Audio path {attr_name} is empty"
+            assert path.startswith("assets/audio/"), f"Audio path {attr_name} doesn't start with assets/audio/"
+
+
+class TestFontSizes:
+    """Test font size constants."""
+    
+    def test_font_sizes_are_positive(self):
+        """Test that all font sizes are positive integers."""
+        font_attrs = [attr for attr in dir(FontSizes) if not attr.startswith('_')]
+        
+        for attr_name in font_attrs:
+            size = getattr(FontSizes, attr_name)
+            assert isinstance(size, int), f"Font size {attr_name} is not an integer"
+            assert size > 0, f"Font size {attr_name} is not positive"
+    
+    def test_font_size_ordering(self):
+        """Test that font sizes are in logical order."""
+        assert FontSizes.SMALL < FontSizes.MEDIUM
+        assert FontSizes.MEDIUM < FontSizes.LARGE
+        assert FontSizes.LARGE < FontSizes.XLARGE
+        assert FontSizes.XLARGE < FontSizes.TITLE
+
+
+class TestLayout:
+    """Test layout constants."""
+    
+    def test_layout_values_are_positive(self):
+        """Test that layout values are positive."""
+        layout_attrs = [attr for attr in dir(Layout) if not attr.startswith('_')]
+        
+        for attr_name in layout_attrs:
+            value = getattr(Layout, attr_name)
+            assert isinstance(value, int), f"Layout value {attr_name} is not an integer"
+            assert value > 0, f"Layout value {attr_name} is not positive"
+
+
+class TestErrorMessages:
+    """Test error message constants."""
+    
+    def test_error_messages_exist(self):
+        """Test that error messages are defined."""
+        assert isinstance(ERROR_MESSAGES, dict)
+        assert len(ERROR_MESSAGES) > 0
+        
+        # Test all values are non-empty strings
+        for key, message in ERROR_MESSAGES.items():
+            assert isinstance(message, str), f"Error message for {key} is not a string"
+            assert len(message) > 0, f"Error message for {key} is empty"
+    
+    def test_error_message_formatting(self):
+        """Test that error messages support formatting."""
+        # Test messages with format placeholders
+        invalid_column_msg = ERROR_MESSAGES["invalid_column"]
+        assert "{column}" in invalid_column_msg
+        assert "{max_col}" in invalid_column_msg
+        
+        column_full_msg = ERROR_MESSAGES["column_full"] 
+        assert "{column}" in column_full_msg

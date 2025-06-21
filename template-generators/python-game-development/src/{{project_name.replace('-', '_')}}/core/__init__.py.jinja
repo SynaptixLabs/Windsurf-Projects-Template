@@ -1,0 +1,51 @@
+"""Core package for {{project_name}} containing constants and exceptions."""
+
+from .constants import (
+    Colors,
+    GameState,
+    PlayerType,
+    PieceType,
+    GameResult,
+    AILevel,
+    DIRECTIONS,
+    ERROR_MESSAGES,
+)
+from .exceptions import (
+    GameError,
+    ConfigurationError,
+    InitializationError,
+    GameLogicError,
+    InvalidMoveError,
+    GameStateError,
+    BoardError,
+    PlayerError,
+    AIError,
+    InputError,
+    UIError,
+    AudioError,
+)
+
+__all__ = [
+    # Constants
+    "Colors",
+    "GameState",
+    "PlayerType", 
+    "PieceType",
+    "GameResult",
+    "AILevel",
+    "DIRECTIONS",
+    "ERROR_MESSAGES",
+    # Exceptions
+    "GameError",
+    "ConfigurationError",
+    "InitializationError",
+    "GameLogicError",
+    "InvalidMoveError",
+    "GameStateError",
+    "BoardError",
+    "PlayerError", 
+    "AIError",
+    "InputError",
+    "UIError",
+    "AudioError",
+]

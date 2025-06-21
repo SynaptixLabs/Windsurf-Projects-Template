@@ -1,0 +1,78 @@
+"""Test configuration and settings functionality."""
+
+import pytest
+from pydantic import ValidationError
+
+from {{project_name.replace('-', '_')}}.config.game_settings import GameSettings, load_game_settings
+
+
+class TestGameSettings:
+    """Test game settings configuration."""
+    
+    def test_default_settings(self):
+        """Test that default settings are valid."""
+        settings = GameSettings()
+        
+        assert settings.game_title == "{{project_description}}"
+        assert settings.window_width == 800
+        assert settings.window_height == 600
+        assert settings.fps == 60
+        assert settings.board_width == 7
+        assert settings.board_height == 6
+        assert settings.connect_length == 4
+    
+    def test_window_size_property(self):
+        """Test window_size property returns correct tuple."""
+        settings = GameSettings(window_width=1024, window_height=768)
+        assert settings.window_size == (1024, 768)
+    
+    def test_board_size_property(self):
+        """Test board_size property returns correct tuple.""" 
+        settings = GameSettings(board_width=8, board_height=7)
+        assert settings.board_size == (8, 7)
+    
+    def test_volume_validation(self):
+        """Test that volume settings are validated."""
+        # Valid volumes
+        settings = GameSettings(sound_volume=0.5, music_volume=1.0)
+        assert settings.sound_volume == 0.5
+        assert settings.music_volume == 1.0
+        
+        # Invalid volumes should raise validation error
+        with pytest.raises(ValidationError):
+            GameSettings(sound_volume=1.5)
+            
+        with pytest.raises(ValidationError):
+            GameSettings(music_volume=-0.1)
+    
+    def test_load_game_settings(self):
+        """Test that load_game_settings returns valid GameSettings instance."""
+        settings = load_game_settings()
+        assert isinstance(settings, GameSettings)
+        assert settings.game_title == "{{project_description}}"
+
+
+class TestSettingsIntegration:
+    """Test settings integration and edge cases."""
+    
+    def test_settings_immutability(self):
+        """Test that settings handle updates properly."""
+        settings1 = GameSettings(fps=30)
+        settings2 = GameSettings(fps=60)
+        
+        assert settings1.fps == 30
+        assert settings2.fps == 60
+    
+    def test_color_tuples(self):
+        """Test that color settings are proper RGB tuples."""
+        settings = GameSettings()
+        
+        # Check all colors are valid RGB tuples
+        assert len(settings.board_color) == 3
+        assert all(0 <= c <= 255 for c in settings.board_color)
+        
+        assert len(settings.player1_color) == 3
+        assert all(0 <= c <= 255 for c in settings.player1_color)
+        
+        assert len(settings.player2_color) == 3
+        assert all(0 <= c <= 255 for c in settings.player2_color)

@@ -1,0 +1,246 @@
+"""Test game exception hierarchy."""
+
+import pytest
+
+from {{project_name.replace('-', '_')}}.core.exceptions import (
+    GameError,
+    ConfigurationError,
+    InitializationError,
+    GameLogicError,
+    InvalidMoveError,
+    GameStateError,
+    BoardError,
+    PlayerError,
+    AIError,
+    AITimeoutError,
+    AIStrategyError,
+    InputError,
+    UIError,
+    RenderError,
+    ScreenError,
+    AudioError,
+    SoundLoadError,
+    MusicError,
+    SaveGameError,
+    LoadGameError,
+    FileFormatError,
+    NetworkError,
+    ConnectionError,
+    ProtocolError,
+    PerformanceError,
+    MemoryError,
+    FrameRateError,
+)
+
+
+class TestExceptionHierarchy:
+    """Test that exception hierarchy is correctly defined."""
+    
+    def test_base_exception(self):
+        """Test that GameError is the base exception."""
+        error = GameError("Test error")
+        assert isinstance(error, Exception)
+        assert str(error) == "Test error"
+    
+    def test_configuration_error_inheritance(self):
+        """Test ConfigurationError inherits from GameError."""
+        error = ConfigurationError("Config error")
+        assert isinstance(error, GameError)
+        assert isinstance(error, Exception)
+    
+    def test_initialization_error_inheritance(self):
+        """Test InitializationError inherits from GameError."""
+        error = InitializationError("Init error")
+        assert isinstance(error, GameError)
+        assert isinstance(error, Exception)
+
+
+class TestGameLogicExceptions:
+    """Test game logic exception hierarchy."""
+    
+    def test_game_logic_error_inheritance(self):
+        """Test GameLogicError inherits from GameError."""
+        error = GameLogicError("Logic error")
+        assert isinstance(error, GameError)
+    
+    def test_invalid_move_error_inheritance(self):
+        """Test InvalidMoveError inherits from GameLogicError."""
+        error = InvalidMoveError("Invalid move")
+        assert isinstance(error, GameLogicError)
+        assert isinstance(error, GameError)
+    
+    def test_game_state_error_inheritance(self):
+        """Test GameStateError inherits from GameLogicError."""
+        error = GameStateError("State error")
+        assert isinstance(error, GameLogicError)
+        assert isinstance(error, GameError)
+    
+    def test_board_error_inheritance(self):
+        """Test BoardError inherits from GameLogicError."""
+        error = BoardError("Board error")
+        assert isinstance(error, GameLogicError)
+        assert isinstance(error, GameError)
+
+
+class TestPlayerExceptions:
+    """Test player and AI exception hierarchy."""
+    
+    def test_player_error_inheritance(self):
+        """Test PlayerError inherits from GameError."""
+        error = PlayerError("Player error")
+        assert isinstance(error, GameError)
+    
+    def test_ai_error_inheritance(self):
+        """Test AIError inherits from PlayerError."""
+        error = AIError("AI error")
+        assert isinstance(error, PlayerError)
+        assert isinstance(error, GameError)
+    
+    def test_ai_timeout_error_inheritance(self):
+        """Test AITimeoutError inherits from AIError."""
+        error = AITimeoutError("AI timeout")
+        assert isinstance(error, AIError)
+        assert isinstance(error, PlayerError)
+        assert isinstance(error, GameError)
+    
+    def test_ai_strategy_error_inheritance(self):
+        """Test AIStrategyError inherits from AIError."""
+        error = AIStrategyError("Strategy error")
+        assert isinstance(error, AIError)
+        assert isinstance(error, PlayerError)
+        assert isinstance(error, GameError)
+
+
+class TestUIExceptions:
+    """Test UI and rendering exception hierarchy."""
+    
+    def test_input_error_inheritance(self):
+        """Test InputError inherits from GameError."""
+        error = InputError("Input error")
+        assert isinstance(error, GameError)
+    
+    def test_ui_error_inheritance(self):
+        """Test UIError inherits from GameError."""
+        error = UIError("UI error")
+        assert isinstance(error, GameError)
+    
+    def test_render_error_inheritance(self):
+        """Test RenderError inherits from UIError."""
+        error = RenderError("Render error")
+        assert isinstance(error, UIError)
+        assert isinstance(error, GameError)
+    
+    def test_screen_error_inheritance(self):
+        """Test ScreenError inherits from UIError."""
+        error = ScreenError("Screen error")
+        assert isinstance(error, UIError)
+        assert isinstance(error, GameError)
+
+
+class TestAudioExceptions:
+    """Test audio exception hierarchy."""
+    
+    def test_audio_error_inheritance(self):
+        """Test AudioError inherits from GameError."""
+        error = AudioError("Audio error")
+        assert isinstance(error, GameError)
+    
+    def test_sound_load_error_inheritance(self):
+        """Test SoundLoadError inherits from AudioError."""
+        error = SoundLoadError("Sound load error")
+        assert isinstance(error, AudioError)
+        assert isinstance(error, GameError)
+    
+    def test_music_error_inheritance(self):
+        """Test MusicError inherits from AudioError."""
+        error = MusicError("Music error")
+        assert isinstance(error, AudioError)
+        assert isinstance(error, GameError)
+
+
+class TestFileExceptions:
+    """Test save/load exception hierarchy."""
+    
+    def test_save_game_error_inheritance(self):
+        """Test SaveGameError inherits from GameError."""
+        error = SaveGameError("Save error")
+        assert isinstance(error, GameError)
+    
+    def test_load_game_error_inheritance(self):
+        """Test LoadGameError inherits from GameError."""
+        error = LoadGameError("Load error")
+        assert isinstance(error, GameError)
+    
+    def test_file_format_error_inheritance(self):
+        """Test FileFormatError inherits from GameError."""
+        error = FileFormatError("Format error")
+        assert isinstance(error, GameError)
+
+
+class TestNetworkExceptions:
+    """Test network exception hierarchy."""
+    
+    def test_network_error_inheritance(self):
+        """Test NetworkError inherits from GameError."""
+        error = NetworkError("Network error")
+        assert isinstance(error, GameError)
+    
+    def test_connection_error_inheritance(self):
+        """Test ConnectionError inherits from NetworkError."""
+        error = ConnectionError("Connection error")
+        assert isinstance(error, NetworkError)
+        assert isinstance(error, GameError)
+    
+    def test_protocol_error_inheritance(self):
+        """Test ProtocolError inherits from NetworkError."""
+        error = ProtocolError("Protocol error")
+        assert isinstance(error, NetworkError)
+        assert isinstance(error, GameError)
+
+
+class TestPerformanceExceptions:
+    """Test performance exception hierarchy."""
+    
+    def test_performance_error_inheritance(self):
+        """Test PerformanceError inherits from GameError."""
+        error = PerformanceError("Performance error")
+        assert isinstance(error, GameError)
+    
+    def test_memory_error_inheritance(self):
+        """Test MemoryError inherits from PerformanceError."""
+        error = MemoryError("Memory error")
+        assert isinstance(error, PerformanceError)
+        assert isinstance(error, GameError)
+    
+    def test_frame_rate_error_inheritance(self):
+        """Test FrameRateError inherits from PerformanceError."""
+        error = FrameRateError("Frame rate error")
+        assert isinstance(error, PerformanceError)
+        assert isinstance(error, GameError)
+
+
+class TestExceptionUsage:
+    """Test practical exception usage scenarios."""
+    
+    def test_exception_with_message(self):
+        """Test exceptions properly store error messages."""
+        message = "Column 5 is full"
+        error = InvalidMoveError(message)
+        assert str(error) == message
+    
+    def test_exception_with_formatted_message(self):
+        """Test exceptions work with formatted messages."""
+        column = 3
+        error = InvalidMoveError(f"Invalid column: {column}")
+        assert "Invalid column: 3" in str(error)
+    
+    def test_exception_chaining(self):
+        """Test that exceptions can be chained."""
+        try:
+            raise AIError("AI calculation failed")
+        except AIError as e:
+            try:
+                raise GameLogicError("Game logic error") from e
+            except GameLogicError as chained_error:
+                assert chained_error.__cause__ is e
+                assert isinstance(chained_error.__cause__, AIError)

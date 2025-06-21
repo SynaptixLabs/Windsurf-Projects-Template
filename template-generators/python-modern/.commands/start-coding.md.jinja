@@ -1,0 +1,192 @@
+# {{project_name}} - Start Coding Script
+
+## 🚀 Project Initialization & Development Continuation
+
+**Purpose**: This script initializes the {{project_name}} project for development and handles session continuation based on current project state.
+
+---
+
+## 📋 Initialization Process
+
+### Step 1: Project State Assessment
+```bash
+# Check if this is initial setup or continuation
+if [ -f "state.md" ]; then
+    echo "🔄 Existing project detected - resuming from current state"
+    # Read current state from state.md
+else
+    echo "🆕 New project initialization starting"
+    # Create initial state.md
+fi
+```
+
+### Step 2: Documentation & Structure Review
+**Windsurf Task**: Please perform comprehensive project review:
+
+1. **📁 Review Project Structure**:
+   - Examine `src/{{project_slug.replace('-', '_')}}/` source code organization
+   - Check `tests/` structure and existing test files
+   - Validate `docs/` documentation completeness
+   - Review `pyproject.toml` dependencies and scripts
+
+2. **📚 Analyze Documentation**:
+   - Read `README.md` for project overview and specifications
+   - Review `docs/projectRoadmap.md` for development plan
+   - Check `docs/techStack.md` for technical decisions
+
+3. **🎯 Project Type Assessment**:
+   - **Project Type**: {{project_type}}
+   - **Target**: {{project_description}}
+   - **Tech Stack**: Python {{python_version}}, {{package_manager}}
+
+### Step 3: Development Planning
+
+**Windsurf Decision Point**: Assess development approach for {{project_type}}:
+
+{% if project_type == "web-api" -%}
+#### Web API Development Focus:
+1. **📝 API Design & Planning**:
+   - Define API endpoints and data models
+   - Plan authentication and authorization approach
+   - Design database schema and relationships
+
+2. **🏗️ Development Phases**:
+   - **Phase 1**: Core API structure and basic endpoints
+   - **Phase 2**: Database integration and advanced features
+   - **Phase 3**: Testing, documentation, and deployment
+{% elif project_type == "agentic-ai" -%}
+#### Agentic AI Development Focus:
+1. **📝 Agent System Planning**:
+   - Define agent roles and responsibilities
+   - Plan multi-agent collaboration patterns
+   - Design data flow and tool integration
+
+2. **🏗️ Development Phases**:
+   - **Phase 1**: Core agent framework and basic functionality
+   - **Phase 2**: Multi-agent orchestration and tool integration
+   - **Phase 3**: Advanced features, optimization, and deployment
+{% elif project_type == "data-science" -%}
+#### Data Science Development Focus:
+1. **📝 Data Pipeline Planning**:
+   - Define data sources and ingestion methods
+   - Plan analysis and modeling approach
+   - Design visualization and reporting strategy
+
+2. **🏗️ Development Phases**:
+   - **Phase 1**: Data ingestion and exploration framework
+   - **Phase 2**: Analysis pipeline and model development
+   - **Phase 3**: Visualization, reporting, and automation
+{% elif project_type == "cli-tool" -%}
+#### CLI Tool Development Focus:
+1. **📝 Command Structure Planning**:
+   - Define CLI commands and options
+   - Plan user interaction and help system
+   - Design configuration and output formats
+
+2. **🏗️ Development Phases**:
+   - **Phase 1**: Core command structure and basic functionality
+   - **Phase 2**: Advanced features and user experience
+   - **Phase 3**: Testing, documentation, and distribution
+{% else -%}
+#### {{project_type.title()}} Development Focus:
+1. **📝 Project Planning**:
+   - Define core functionality and requirements
+   - Plan development approach and milestones
+   - Design architecture and module structure
+
+2. **🏗️ Development Phases**:
+   - **Phase 1**: Core functionality and foundation
+   - **Phase 2**: Advanced features and integration
+   - **Phase 3**: Testing, documentation, and polish
+{% endif -%}
+
+### Step 4: Environment & Infrastructure Validation
+**Execute Environment Setup**:
+
+```bash
+# Validate development environment
+{{package_manager}} install
+{{package_manager}} run ci  # Must pass all quality gates
+
+# Verify project-specific components
+{{package_manager}} run python -c "
+from src.{{project_slug.replace('-', '_')}} import __version__
+print(f'✅ {{project_name}} v{__version__} ready')
+"
+```
+
+**Quality Gates Verification**:
+- ✅ All dependencies installed correctly
+- ✅ Code quality tools (Ruff, MyPy) operational  
+- ✅ Test suite passing (>{{coverage_threshold}}% coverage)
+- ✅ Project structure validated
+
+### Step 5: State Tracking Initialization
+**⚠️ CRITICAL**: Initialize or update `state.md` file:
+
+```markdown
+# {{project_name}} - Project State
+
+**Last Updated**: [Current Date]
+**Current Phase**: Project Initialization
+**Progress**: Environment setup and planning complete
+
+## Development Summary
+Project generated from template. Environment validation completed. Development planning finalized. Ready to begin Phase 1 core development.
+
+## Development Status
+- **Phase 1**: 🔄 Starting - Core functionality
+- **Phase 2**: ⏳ Pending - Advanced features
+- **Phase 3**: ⏳ Pending - Polish & deployment
+```
+
+### Step 6: Begin Development
+**Final Step**: After validation and state initialization:
+
+```
+✅ {{project_name}} initialization complete!
+
+📊 Project Summary:
+- **Type**: {{project_type}}
+- **Development Plan**: Phased approach with quality focus
+- **Current State**: Ready for core development
+- **Tech Stack**: Python {{python_version}}, {{package_manager}}
+
+🚀 Beginning development. Let's start with Phase 1 core functionality implementation.
+```
+
+---
+
+## 🔄 Session Continuation (Returning Users)
+
+**When returning to this project**, Windsurf should:
+
+1. **📖 Read Current State**: Check `state.md` for last known progress
+2. **📊 Provide Summary**: Brief overview of completed work and current objectives  
+3. **🎯 Resume Development**: Continue from the exact point where development left off
+4. **⚠️ Update State**: Remember to update `state.md` after completing any major milestone
+
+**Example Continuation**:
+```
+📊 {{project_name}} Status:
+- **Last Session**: [Date from state.md]
+- **Completed**: [List from state.md]
+- **Current Phase**: [Current phase from state.md]
+- **Next Task**: [Next task from state.md]
+
+🚀 Continuing development from [specific point]...
+```
+
+---
+
+## ⚠️ IMPORTANT: State Tracking Requirements
+
+**Windsurf MUST update `state.md` after**:
+- ✅ Completing any development phase
+- ✅ Finishing major implementation milestones
+- ✅ Completing significant feature implementations
+- ✅ Before ending any development session
+
+**Keep the format simple**: Update metadata, summary, and phase status only.
+
+**This ensures seamless project continuation across sessions!**

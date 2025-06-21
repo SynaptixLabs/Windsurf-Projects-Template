@@ -1,0 +1,186 @@
+# {{project_name}} - Start Coding Script
+
+## 🚀 Project Initialization & Development Continuation
+
+**Purpose**: This script initializes the {{project_name}} project for development and handles session continuation based on current project state.
+
+---
+
+## 📋 Initialization Process
+
+### Step 1: Project State Assessment
+```bash
+# Check if this is initial setup or continuation
+if [ -f "state.md" ]; then
+    echo "🔄 Existing project detected - resuming from current state"
+    # Read current state from state.md
+else
+    echo "🆕 New project initialization starting"
+    # Create initial state.md
+fi
+```
+
+### Step 2: Documentation & Structure Review
+**Windsurf Task**: Please perform comprehensive project review:
+
+1. **📁 Review Project Structure**:
+   - Examine `src/{{project_slug.replace('-', '_')}}/` source code organization
+   - Check `tests/` structure and existing test files
+   - Validate `docs/` documentation completeness
+   - Review `pyproject.toml` dependencies and scripts
+
+2. **📚 Analyze Documentation**:
+   - Read `README.md` for project overview and specifications
+   - Review `docs/projectRoadmap.md` for development plan
+   - Check `docs/techStack.md` for technical decisions
+   {% if use_sprint_based_todos -%}
+   - Examine all `docs/TODO.{{project_slug}}.*.md` files for sprint planning
+   {% endif -%}
+
+3. **🎯 Project Type Assessment**:
+   - **Project Type**: {{project_type}}
+   - **Game Framework**: {{game_framework}}
+   - **Target**: {{project_description}}
+
+### Step 3: TODO Files & Sprint Planning Assessment
+
+{% if use_sprint_based_todos -%}
+**Windsurf Decision Point**: Examine the TODO files in `docs/`:
+
+#### Scenario A: TODO Files Are Placeholders
+If TODO files contain generic placeholders or incomplete specifications:
+
+1. **📝 Collaborate with User to Create Detailed TODOs**:
+   {% if project_type == "game-development" -%}
+   - **For {{game_category}} games**: Work with user to define specific game rules, mechanics, win conditions
+   - **Example**: "Let's define the specific rules for {{project_name}}. Is this a classic Connect Four (7x6 board, 4-in-a-row) or a variation?"
+   {% endif -%}
+   - **Sprint 1**: Core logic and game mechanics specific to this game type
+   - **Sprint 2**: User interface and {{game_framework}} implementation  
+   - **Sprint 3**: Advanced features (AI, save/load, polish)
+
+2. **📋 Create Detailed Sprint Plans**:
+   - Update each `docs/TODO.{{project_slug}}.N.md` with specific, actionable tasks
+   - Ensure tasks are relevant to {{project_description}}
+   - Include acceptance criteria and technical specifications
+
+#### Scenario B: TODO Files Are Complete
+If TODO files contain detailed, project-specific tasks:
+
+1. **📊 Summarize Project Plan**:
+   - Review and summarize all {{total_sprints}} sprints
+   - Highlight key milestones and deliverables
+   - Confirm technical approach and dependencies
+
+2. **🎯 Begin Development**:
+   - Proceed directly to Sprint 1 execution
+   - Follow the detailed task list from `docs/TODO.{{project_slug}}.1.md`
+{% else -%}
+**📋 Development Planning**: Work with user to establish development milestones and task breakdown for {{project_description}}.
+{% endif -%}
+
+### Step 4: Environment & Infrastructure Validation
+**Execute Environment Setup**:
+
+```bash
+# Validate development environment
+{{package_manager}} install
+{{package_manager}} run ci  # Must pass all quality gates
+
+# Verify project-specific components
+{{package_manager}} run python -c "
+from src.{{project_slug.replace('-', '_')}} import __version__
+print(f'✅ {{project_name}} v{__version__} ready')
+"
+```
+
+**Quality Gates Verification**:
+- ✅ All dependencies installed correctly
+- ✅ Code quality tools (Ruff, MyPy) operational  
+- ✅ Test suite passing (>{{coverage_threshold}}% coverage)
+- ✅ Project structure validated
+
+### Step 5: State Tracking Initialization
+**⚠️ CRITICAL**: Initialize or update `state.md` file:
+
+```markdown
+# {{project_name}} - Project State
+
+**Last Updated**: [Current Date]
+**Current Sprint**: Sprint 0 (Infrastructure Setup)
+**Current Phase**: Project Initialization
+**Progress**: Environment setup and planning complete
+
+## Development Summary
+Project generated from template. Environment validation completed. TODO planning finalized. Ready to begin Sprint 1 core development.
+
+## Sprint Status
+- **Sprint 0**: ✅ Complete - Infrastructure setup
+- **Sprint 1**: 🔄 Starting - Core game logic
+- **Sprint 2**: ⏳ Pending - User interface
+- **Sprint 3**: ⏳ Pending - Advanced features
+```
+
+### Step 6: Begin Development
+**Final Step**: After validation and state initialization:
+
+{% if use_sprint_based_todos -%}
+```
+✅ {{project_name}} initialization complete!
+
+📊 Project Summary:
+- **Type**: {{project_type}} ({{game_framework}})
+- **Sprint Plan**: {{total_sprints}} sprints planned
+- **Current State**: Ready for Sprint 1
+- **Next Tasks**: [Summarize top 3-5 tasks from TODO.{{project_slug}}.1.md]
+
+🚀 Beginning Sprint 1 development. Let's start with the first task from docs/TODO.{{project_slug}}.1.md.
+```
+{% else -%}
+```
+✅ {{project_name}} initialization complete!
+
+📊 Project Summary:
+- **Type**: {{project_type}} ({{game_framework}})
+- **Development Plan**: [Summary of planned development phases]
+- **Current State**: Ready for core development
+
+🚀 Beginning development. Let's start with the core functionality implementation.
+```
+{% endif -%}
+
+---
+
+## 🔄 Session Continuation (Returning Users)
+
+**When returning to this project**, Windsurf should:
+
+1. **📖 Read Current State**: Check `state.md` for last known progress
+2. **📊 Provide Summary**: Brief overview of completed work and current objectives  
+3. **🎯 Resume Development**: Continue from the exact point where development left off
+4. **⚠️ Update State**: Remember to update `state.md` after completing any sprint or major milestone
+
+**Example Continuation**:
+```
+📊 {{project_name}} Status:
+- **Last Session**: [Date from state.md]
+- **Completed**: [List from state.md]
+- **Current Sprint**: [Current sprint from state.md]
+- **Next Task**: [Next task from state.md]
+
+🚀 Continuing development from [specific point]...
+```
+
+---
+
+## ⚠️ IMPORTANT: State Tracking Requirements
+
+**Windsurf MUST update `state.md` after**:
+- ✅ Completing any sprint (Sprint 0, 1, 2, 3)
+- ✅ Finishing major development milestones
+- ✅ Completing significant feature implementations
+- ✅ Before ending any development session
+
+**Keep the format simple**: Update metadata, summary, and sprint status only.
+
+**This ensures seamless project continuation across sessions!**

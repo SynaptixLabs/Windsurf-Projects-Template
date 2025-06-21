@@ -1,0 +1,117 @@
+"""{{project_name}} exception hierarchy for game logic, UI, AI, and system errors."""
+
+
+# Base exceptions
+class GameError(Exception):
+    """Base exception for all game-related errors."""
+
+
+class ConfigurationError(GameError):
+    """Raised for game configuration and settings errors."""
+
+
+class InitializationError(GameError):
+    """Raised when game components fail to initialize properly."""
+
+
+# Game logic exceptions
+class GameLogicError(GameError):
+    """Raised for errors in game logic and rule validation."""
+
+
+class InvalidMoveError(GameLogicError):
+    """Raised when an invalid move is attempted."""
+
+
+class GameStateError(GameLogicError):
+    """Raised for invalid game state transitions or operations."""
+
+
+class BoardError(GameLogicError):
+    """Raised for board-related errors (invalid positions, etc.)."""
+
+
+# Player and AI exceptions
+class PlayerError(GameError):
+    """Raised for player-related errors."""
+
+
+class AIError(PlayerError):
+    """Raised for AI player errors."""
+
+
+class AITimeoutError(AIError):
+    """Raised when AI takes too long to make a move."""
+
+
+class AIStrategyError(AIError):
+    """Raised for errors in AI strategy or decision making."""
+
+
+# Input and UI exceptions  
+class InputError(GameError):
+    """Raised for input handling errors."""
+
+
+class UIError(GameError):
+    """Raised for user interface errors."""
+
+
+class RenderError(UIError):
+    """Raised when rendering operations fail."""
+
+
+class ScreenError(UIError):
+    """Raised for screen/display related errors."""
+
+
+# Audio and media exceptions
+class AudioError(GameError):
+    """Raised for audio system errors."""
+
+
+class SoundLoadError(AudioError):
+    """Raised when sound files cannot be loaded."""
+
+
+class MusicError(AudioError):
+    """Raised for background music errors."""
+
+
+# Save/load exceptions
+class SaveGameError(GameError):
+    """Raised when game save operations fail."""
+
+
+class LoadGameError(GameError):
+    """Raised when game load operations fail."""
+
+
+class FileFormatError(GameError):
+    """Raised for invalid save file formats."""
+
+
+# Network and multiplayer exceptions (for future features)
+class NetworkError(GameError):
+    """Raised for network-related errors."""
+
+
+class ConnectionError(NetworkError):
+    """Raised when network connection fails."""
+
+
+class ProtocolError(NetworkError):
+    """Raised for network protocol errors."""
+
+
+# Performance and resource exceptions
+class PerformanceError(GameError):
+    """Raised for performance-related issues."""
+
+
+class MemoryError(PerformanceError):
+    """Raised when memory usage is excessive."""
+
+
+class FrameRateError(PerformanceError):
+    """Raised when frame rate drops below acceptable levels."""

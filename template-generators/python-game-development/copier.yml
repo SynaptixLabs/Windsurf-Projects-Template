@@ -1,0 +1,121 @@
+# Game Development Template - Extends python-modern base template
+# This template only contains game-specific additions and overrides
+
+_templates_suffix: .jinja
+_envops:
+  block_start_string: "{%"
+  block_end_string: "%}"
+  variable_start_string: "{{"
+  variable_end_string: "}}"
+
+# Note: This template works with windsurf_generate.py inheritance system
+# The base python-modern template is applied first, then this overlay
+
+# Game-specific project information (inherits basic info from base)
+project_description:
+  type: str
+  help: "Brief project description"
+  default: "A Python game built with modern tooling"
+
+# Game framework selection
+game_framework:
+  type: str
+  help: "Game framework/library"
+  default: "pygame"
+  choices:
+    - "pygame"
+    - "arcade" 
+    - "pyglet"
+    - "custom"
+
+# Game category
+game_category:
+  type: str
+  help: "General game category"
+  default: "board_game"
+  choices:
+    - "board_game"
+    - "puzzle_game"
+    - "action_game"
+    - "strategy_game"
+    - "rpg_game"
+    - "arcade_game"
+    - "simulation"
+    - "other"
+
+# Project requirements approach
+has_project_spec:
+  type: bool
+  help: "Do you have existing project specifications or requirements?"
+  default: false
+
+project_spec_source:
+  type: str
+  help: "Where are your project specifications?"
+  choices:
+    - "will_provide_text"
+    - "have_todo_file"
+    - "have_requirements_doc"
+    - "will_create_interactively"
+  when: "{{ has_project_spec }}"
+
+project_requirements_text:
+  type: str
+  help: "Paste your project requirements/specifications here"
+  multiline: true
+  when: "{{ project_spec_source == 'will_provide_text' }}"
+
+# Game-specific performance settings
+target_fps:
+  type: int
+  help: "Target FPS for the game"
+  default: 60
+  validator: "{% if target_fps <= 0 or target_fps > 240 %}FPS must be between 1 and 240{% endif %}"
+
+# Game assets
+include_assets:
+  type: bool
+  help: "Include sample game assets?"
+  default: true
+
+# Performance profiling (override base default)
+include_performance_profiling:
+  type: bool
+  help: "Include performance profiling tools (recommended for games)?"
+  default: true
+
+# Testing level (override base default for games)
+testing_level:
+  type: str
+  help: "Testing infrastructure level"
+  default: "comprehensive"  # Games need performance testing
+  choices:
+    - "minimal"
+    - "standard" 
+    - "comprehensive"
+
+# Sprint planning for game development
+use_sprint_based_todos:
+  type: bool
+  help: "Generate sprint-based TODO lists?"
+  default: true
+
+sprint_duration_weeks:
+  type: int
+  help: "Sprint duration in weeks"
+  default: 2
+  when: "{{ use_sprint_based_todos }}"
+
+total_sprints:
+  type: int
+  help: "Estimated total number of sprints"
+  default: 4
+  when: "{{ use_sprint_based_todos }}"
+
+# Game-specific exclusions
+_exclude:
+  - "*.save"
+  - "saves/"
+  - "screenshots/"
+  - "profiles/"
+  - "assets/temp/"

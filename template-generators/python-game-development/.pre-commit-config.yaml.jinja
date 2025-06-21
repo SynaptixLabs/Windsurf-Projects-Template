@@ -1,0 +1,148 @@
+# Pre-commit hooks configuration for {{project_name}}
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # Built-in hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+
+  # Ruff for linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.11
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+      # Run the formatter
+      - id: ruff-format
+
+  # MyPy for type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        args: [--strict]
+        additional_dependencies: 
+          - pydantic
+          - types-setuptools
+{% if game_framework == "pygame" -%}
+          - pygame-stubs
+{% elif game_framework == "arcade" -%}
+          - arcade-stubs
+{% endif -%}
+
+  # Security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  # Check for known security vulnerabilities
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+
+  # Conventional commits
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [optional-scope]
+
+  # Python imports sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+
+  # Check for common Python mistakes
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-no-log-warn
+      - id: python-no-eval
+      - id: python-check-mock-methods
+      - id: python-use-type-annotations
+
+  # Local hooks for project-specific checks
+  - repo: local
+    hooks:
+      # Comprehensive quality gates (final check)
+      - id: ci-pipeline
+        name: 🔬 Full CI Pipeline (comprehensive validation)
+        entry: poetry run ci
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        always_run: true
+        verbose: true
+
+      # Run tests before commit (fallback if ci fails)
+      - id: pytest
+        name: Run tests (fallback)
+        entry: poetry run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [manual]
+        args: ["--tb=short", "-q"]
+
+      # Check game constants for valid values
+      - id: validate-game-constants
+        name: Validate game constants
+        entry: python -c "
+          from src.{{project_name.replace('-', '_')}}.core.constants import *;
+          assert DEFAULT_WINDOW_WIDTH > 0;
+          assert DEFAULT_WINDOW_HEIGHT > 0;
+          assert DEFAULT_FPS > 0;
+          print('Game constants validation passed')
+        "
+        language: system
+        files: "src/{{project_name.replace('-', '_')}}/core/constants.py"
+
+      # Ensure game settings can be loaded
+      - id: validate-game-settings
+        name: Validate game settings
+        entry: python -c "
+          from src.{{project_name.replace('-', '_')}}.config.game_settings import GameSettings;
+          settings = GameSettings();
+          print('Game settings validation passed')
+        "
+        language: system
+        files: "src/{{project_name.replace('-', '_')}}/config/"
+
+# Global configuration
+default_stages: [commit]
+fail_fast: false
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: 'main'
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

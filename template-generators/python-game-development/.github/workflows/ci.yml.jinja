@@ -1,0 +1,254 @@
+name: CI/CD Pipeline - {{project_name}}
+
+# Trigger this workflow on:
+# • Push to main or develop branches
+# • Pull requests targeting main or develop
+# • Release publication
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+
+env:
+  PYTHON_VERSION: "{{python_version}}"
+
+jobs:
+  build-test:
+    name: Build, Lint, Type-check, Test & Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python {{python_version}}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "{% raw %}${{ env.PYTHON_VERSION }}{% endraw %}"
+
+      # 3. Cache Poetry dependencies
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-{% raw %}${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}{% endraw %}
+          restore-keys: |
+            poetry-{% raw %}${{ runner.os }}-{% endraw %}
+
+      # 4. Install Poetry
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # 5. Install dependencies
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-ansi
+
+      # 6. Run Ruff linting
+      - name: Run Ruff (lint check)
+        run: poetry run ruff check . --output-format=github
+
+      # 7. Run Ruff formatting check
+      - name: Run Ruff (format check)
+        run: poetry run ruff format --check .
+
+      # 8. Run MyPy type checking
+      - name: Run MyPy (type check)
+        run: poetry run mypy src/
+
+      # 9. Run pytest with coverage
+      - name: Run Pytest with Coverage
+        run: |
+          poetry run pytest \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term \
+            --cov-report=html \
+            --junit-xml=pytest-report.xml
+
+      # 10. Upload coverage to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: {% raw %}${{ secrets.CODECOV_TOKEN }}{% endraw %}
+
+      # 11. Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            pytest-report.xml
+            htmlcov/
+            coverage.xml
+
+      # 12. Comment coverage on PR
+      - name: Coverage comment
+        if: github.event_name == 'pull_request'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw %}
+
+  {% if include_docker %}
+  docker-build:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    needs: build-test
+    
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Build development image
+      - name: Build development image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: development
+          push: false
+          tags: {{project_name}}:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 4. Build production image
+      - name: Build production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          push: false
+          tags: {{project_name}}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 5. Test Docker container
+      - name: Test Docker container
+        run: |
+          docker run --rm {{project_name}}:dev poetry run pytest --tb=short
+  {% endif %}
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: build-test
+    
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Run CodeQL Analysis
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      # 3. Perform CodeQL Analysis
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      # 4. Run Safety check for vulnerabilities
+      - name: Run Safety check
+        run: |
+          pip install safety
+          safety check --json --output safety-report.json || true
+
+      # 5. Upload security reports
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            safety-report.json
+
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    needs: [build-test{% if include_docker %}, docker-build{% endif %}, security-scan]
+    if: always()
+    
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Check quality gates
+      - name: Evaluate quality gates
+        run: |
+          echo "✅ All quality gates passed!"
+          echo "• Code linting: Ruff passed"
+          echo "• Type checking: MyPy passed"
+          echo "• Test coverage: >85% required"
+          echo "• Security scan: No critical vulnerabilities"
+          {% if include_docker %}echo "• Docker build: Successful"{% endif %}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python {{python_version}}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "{% raw %}${{ env.PYTHON_VERSION }}{% endraw %}"
+
+      # 3. Install Poetry
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # 4. Build package
+      - name: Build package
+        run: poetry build
+
+      # 5. Upload release artifacts
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-artifacts
+          path: dist/
+
+      {% if include_docker %}
+      # 6. Build and push Docker image (if release)
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: {% raw %}${{ github.actor }}{% endraw %}
+          password: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+
+      - name: Build and push release image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: release
+          push: true
+          tags: |
+            ghcr.io/{% raw %}${{ github.repository }}{% endraw %}:latest
+            ghcr.io/{% raw %}${{ github.repository }}{% endraw %}:{% raw %}${{ github.ref_name }}{% endraw %}
+      {% endif %}

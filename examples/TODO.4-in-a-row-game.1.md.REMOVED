@@ -1,0 +1,75 @@
+# TODO List: 4-in-a-row-game - Sprint 1
+
+**Generated:** 2025-01-15 10:30
+**Sprint Duration:** 2025-01-15 to 2025-01-29
+**Project:** 4-in-a-row-game
+
+## 📋 Sprint 1 Objectives
+
+## 🏗️ Project Infrastructure
+
+- [ ] **01.** 🔴 Set up Python project structure with Poetry
+  *Initialize pyproject.toml, create src/ structure*
+  📅 **Estimated:** 2h
+
+- [ ] **02.** 🔴 Configure development tools (Ruff, MyPy, Pre-commit)
+  *Set up code quality and formatting tools*
+  📅 **Estimated:** 1h
+
+- [ ] **03.** 🔴 Set up testing infrastructure with pytest
+  *Configure pytest, add basic test structure*
+  📅 **Estimated:** 2h
+
+## 🎮 Core Game Engine
+
+- [ ] **04.** 🔴 Initialize pygame and create main game window
+  *Basic pygame setup with window, event handling*
+  📅 **Estimated:** 3h
+
+- [ ] **05.** 🔴 Implement basic game loop (update/render cycle)
+  *Main game loop with FPS control*
+  📅 **Estimated:** 2h
+
+- [ ] **06.** 🔴 Create game board data structure
+  *2D array or similar for game state*
+  📅 **Estimated:** 2h
+
+## 📋 Game Logic Foundation
+
+- [ ] **07.** 🟡 Implement basic move validation
+  *Check if moves are legal (column not full, etc.)*
+  📅 **Estimated:** 3h
+
+- [ ] **08.** 🟡 Add win condition detection
+  *Check for 4-in-a-row (horizontal, vertical, diagonal)*
+  📅 **Estimated:** 4h
+
+- [ ] **09.** 🟡 Create basic UI for human player input
+  *Mouse click to select column*
+  📅 **Estimated:** 3h
+
+
+## 📊 Sprint Metrics
+
+- **Total Tasks:** 9
+- **Estimated Hours:** 22
+- **High Priority:** 6
+- **Medium Priority:** 3
+- **Low Priority:** 0
+
+## 🎯 Definition of Done
+
+- [ ] All tasks completed and tested
+- [ ] Code review completed
+- [ ] Documentation updated
+- [ ] Tests passing (unit + integration)
+- [ ] Sprint demo prepared
+- [ ] Ready for next sprint
+
+## 📝 Notes
+
+*Add sprint-specific notes, blockers, or important decisions here*
+
+---
+**Template:** Windsurf Projects Template Generator
+**Last Updated:** 2025-01-15 10:30

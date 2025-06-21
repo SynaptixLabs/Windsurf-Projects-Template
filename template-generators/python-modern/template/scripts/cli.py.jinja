@@ -1,0 +1,126 @@
+# scripts/cli.py
+"""CLI commands for {{ project_name }}."""
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+def run():
+    """Run the main application."""
+    subprocess.run([sys.executable, "-m", "{{ project_slug.replace('-', '_') }}.main"], check=True)
+
+
+def dev():
+    """Start development mode with file watching."""
+    print("Starting development mode...")
+    {% if project_type == "web-api" -%}
+    # FastAPI development server with auto-reload
+    subprocess.run([
+        "uvicorn", 
+        "{{ project_slug.replace('-', '_') }}.main:app", 
+        "--reload",
+        "--host", "0.0.0.0",
+        "--port", "8000"
+    ], check=True)
+    {% elif project_type == "agentic-ai" -%}
+    # CrewAI development mode
+    subprocess.run([
+        sys.executable, "-m", "{{ project_slug.replace('-', '_') }}.main", 
+        "--debug"
+    ], check=True)
+    {% else -%}
+    # Standard development mode with file watching
+    try:
+        import watchfiles
+        print("Watching for file changes...")
+        # Add file watching logic here
+        run()
+    except ImportError:
+        print("File watching not available, running normally...")
+        run()
+    {% endif %}
+
+
+def lint():
+    """Run linting checks."""
+    subprocess.run(["ruff", "check", "."], check=True)
+
+
+def test():
+    """Run tests with coverage."""
+    subprocess.run([
+        "pytest", 
+        "--cov=src/{{ project_slug.replace('-', '_') }}",
+        "--cov-report=term-missing",
+        "--cov-report=html"
+    ], check=True)
+
+
+def ci():
+    """Run full CI pipeline locally."""
+    print("Running CI pipeline...")
+    
+    # Linting
+    print("🔍 Running linting...")
+    subprocess.run(["ruff", "check", "."], check=True)
+    
+    # Formatting check
+    print("📐 Checking formatting...")
+    subprocess.run(["ruff", "format", "--check", "."], check=True)
+    
+    # Type checking
+    print("🔧 Running type checks...")
+    subprocess.run(["mypy", "src/"], check=True)
+    
+    # Tests with coverage
+    print("🧪 Running tests...")
+    subprocess.run([
+        "pytest", 
+        "--cov=src",
+        "--cov-fail-under={{ coverage_threshold }}"
+    ], check=True)
+    
+    print("✅ CI pipeline completed successfully!")
+
+
+def format_code():
+    """Format code using ruff."""
+    subprocess.run(["ruff", "format", "."], check=True)
+    subprocess.run(["ruff", "check", "--fix", "."], check=True)
+
+
+def clean():
+    """Clean build artifacts and cache files."""
+    import shutil
+    
+    patterns = [
+        "**/__pycache__",
+        "**/*.pyc", 
+        "**/*.pyo",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "htmlcov",
+        "dist",
+        "build",
+        "*.egg-info"
+    ]
+    
+    root = Path(".")
+    for pattern in patterns:
+        for path in root.glob(pattern):
+            if path.is_dir():
+                shutil.rmtree(path)
+                print(f"Removed directory: {path}")
+            else:
+                path.unlink()
+                print(f"Removed file: {path}")
+    
+    print("🧹 Cleanup completed!")
+
+
+# For Poetry script compatibility
+def main():
+    """Default main function."""
+    run()

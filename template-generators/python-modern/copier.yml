@@ -1,0 +1,213 @@
+# Copier Template Configuration for Python Projects (2025)
+# This file defines the template generation variables and logic
+
+_templates_suffix: .jinja
+_envops:
+  block_start_string: "{%"
+  block_end_string: "%}"
+  variable_start_string: "{{"
+  variable_end_string: "}}"
+
+# Basic project information
+project_name:
+  type: str
+  help: "Project name (e.g., 'My Awesome Project')"
+  validator: "{% if not project_name %}Project name is required{% endif %}"
+
+project_slug:
+  type: str
+  help: "Project slug (lowercase, underscores/hyphens allowed)"
+  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') | regex_replace('^[0-9]', 'game_') }}"
+  validator: "{% if not project_slug.replace('-', '').replace('_', '').replace('game_', '').isalnum() %}Use only letters, numbers, hyphens, or underscores{% endif %}"
+
+project_description:
+  type: str
+  help: "Brief project description"
+  default: "A Python project built with modern 2025 tooling"
+
+author_name:
+  type: str
+  help: "Author name"
+  default: "Your Name"
+
+author_email:
+  type: str
+  help: "Author email"
+  default: "your.email@example.com"
+
+# Technical configuration
+python_version:
+  type: str
+  help: "Python version"
+  default: "3.12"
+  choices:
+    - "3.11"
+    - "3.12"
+    - "3.13"
+
+project_type:
+  type: str
+  help: "What type of project are you building?"
+  default: "web-api"
+  choices:
+    - "web-api"
+    - "agentic-ai" 
+    - "data-science"
+    - "game-development"
+    - "cli-tool"
+    - "library"
+
+package_manager:
+  type: str
+  help: "Package manager preference"
+  default: "poetry"
+  choices:
+    - "poetry"
+    - "uv"
+
+# Database selections (multi-select)
+databases:
+  type: str
+  help: "Database backends to include (space-separated)"
+  multiselect: true
+  default: []
+  choices:
+    - "postgresql"
+    - "mongodb"
+    - "redis"
+    - "sqlite"
+    - "chromadb"
+    - "pinecone"
+  when: "{{ project_type in ['web-api', 'agentic-ai', 'data-science'] }}"
+
+# Testing configuration
+testing_framework:
+  type: str
+  help: "Testing approach"
+  default: "comprehensive"
+  choices:
+    - "basic"
+    - "comprehensive"
+    - "enterprise"
+
+coverage_threshold:
+  type: int
+  help: "Minimum test coverage percentage"
+  default: 85
+  validator: "{% if coverage_threshold < 0 or coverage_threshold > 100 %}Coverage must be between 0 and 100{% endif %}"
+
+# Advanced options
+include_docker:
+  type: bool
+  help: "Include Docker configuration?"
+  default: true
+
+include_github_actions:
+  type: bool
+  help: "Include GitHub Actions CI/CD?"
+  default: true
+
+include_pre_commit:
+  type: bool
+  help: "Include pre-commit hooks?"
+  default: true
+
+include_docs:
+  type: bool
+  help: "Include documentation setup?"
+  default: true
+
+# Windsurf integration
+include_windsurf:
+  type: bool
+  help: "Include Windsurf IDE integration files?"
+  default: true
+
+# CrewAI specific options (only shown for agentic-ai projects)
+crewai_features:
+  type: str
+  help: "CrewAI features to include (space-separated)"
+  multiselect: true
+  default: ["basic-agents", "tools"]
+  choices:
+    - "basic-agents"
+    - "flows"
+    - "tools"
+    - "memory"
+    - "human-in-loop"
+  when: "{{ project_type == 'agentic-ai' }}"
+
+# FastAPI specific options
+include_auth:
+  type: bool
+  help: "Include authentication setup?"
+  default: false
+  when: "{{ project_type == 'web-api' }}"
+
+api_version:
+  type: str
+  help: "API version prefix"
+  default: "v1"
+  when: "{{ project_type == 'web-api' }}"
+
+# Data Science specific options
+include_notebooks:
+  type: bool
+  help: "Include Jupyter notebook setup?"
+  default: true
+  when: "{{ project_type == 'data-science' }}"
+
+orchestration_tool:
+  type: str
+  help: "Workflow orchestration tool"
+  default: "prefect"
+  choices:
+    - "prefect"
+    - "airflow"
+    - "none"
+  when: "{{ project_type == 'data-science' }}"
+
+# Game development specific options
+game_type:
+  type: str
+  help: "Type of game"
+  default: "2d-arcade"
+  choices:
+    - "2d-arcade"
+    - "puzzle"
+    - "simulation"
+    - "educational"
+  when: "{{ project_type == 'game-development' }}"
+
+include_assets:
+  type: bool
+  help: "Include sample game assets?"
+  default: true
+  when: "{{ project_type == 'game-development' }}"
+
+# Template exclusions
+_skip_if_exists:
+  - "README.md"
+  - ".env"
+  - "*.md"
+
+# Template migrations (for updates)
+_migrations:
+  - version: "1.0.0"
+    description: "Initial template"
+  - version: "1.1.0" 
+    description: "Added Ruff formatter, removed Black"
+  - version: "1.2.0"
+    description: "Added UV package manager option"
+
+# Post-generation tasks (DISABLED - handled by windsurf_generate.py)
+# _tasks:
+#   - task: "init_git"
+#     description: "Initialize git repository"
+#     when: true
+#   - task: "install_dependencies"
+#     description: "Install dependencies with {{ package_manager }}"
+#     when: true
+#   - task: "setup_pre_commit"
+#     description: "Setup pre-commit hooks"
+#     when: "{{ include_pre_commit }}"
