@@ -120,44 +120,39 @@ class TemplateRenderer:
             return False
     
     def _setup_project_logging(self, config: Dict[str, Any]) -> logging.Logger:
-        """Setup comprehensive logging for project generation."""
-        # Create logs directory if it doesn't exist
-        logs_dir = Path("logs")
-        logs_dir.mkdir(exist_ok=True)
+        """Setup unified logging for project generation (prevents duplication)."""
+        # Use the existing main logger instead of creating a separate one
+        main_logger = logging.getLogger('windsurf_generator')
         
-        # Setup project-specific logger
+        if main_logger.handlers:
+            # Main logger already exists, just add project-specific context
+            project_name = config['project_name']
+            
+            # Add project context to existing logger
+            main_logger.info(f"🎯 PROJECT CONTEXT: {project_name}")
+            main_logger.info(f"📋 TEMPLATE: {config.get('template', 'unknown')}")
+            main_logger.info(f"📁 TARGET: {config.get('target_dir', 'unknown')}")
+            main_logger.info("=" * 60)
+            
+            # Return the existing logger instead of creating a new one
+            return main_logger
+        
+        # If no main logger exists, create a unified one (fallback)
         project_name = config['project_name']
-        logger = logging.getLogger(f'template_renderer.{project_name}')
+        logger = logging.getLogger('template_renderer_unified')
+        
+        if logger.handlers:
+            # Logger already configured, just add context
+            logger.info(f"🎯 PROJECT CONTEXT: {project_name}")
+            return logger
+        
+        # Configure unified logger
         logger.setLevel(logging.DEBUG)
         
-        # Clear existing handlers
-        logger.handlers.clear()
-        
-        # File handler for detailed logs
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_file = logs_dir / f"generation_{project_name}_{timestamp}.log"
-        
-        file_handler = logging.FileHandler(log_file, encoding='utf-8')
-        file_handler.setLevel(logging.DEBUG)
-        
-        # Console handler for user feedback
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        
-        # Formatters
-        detailed_formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s'
-        )
-        simple_formatter = logging.Formatter('%(levelname)s: %(message)s')
-        
-        file_handler.setFormatter(detailed_formatter)
-        console_handler.setFormatter(simple_formatter)
-        
-        logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
-        
-        logger.info(f"🚀 Starting template rendering for: {project_name}")
-        logger.info(f"📝 Detailed logs will be saved to: {log_file}")
+        # Add context header
+        logger.info(f"🚀 UNIFIED TEMPLATE RENDERING - {project_name}")
+        logger.info(f"📋 Template: {config.get('template', 'unknown')}")
+        logger.info(f"📁 Target: {config.get('target_dir', 'unknown')}")
         
         return logger
     
@@ -389,6 +384,10 @@ class TemplateRenderer:
                         if any(pattern in str(item) for pattern in excluded_patterns):
                             self.logger.debug(f"   ⏭️ Skipped: {item.relative_to(temp_path)}")
                             continue
+                        
+                        # Special handling for docs files - ensure they're always copied
+                        if '/docs/' in str(item) or '\\docs\\' in str(item):
+                            self.logger.debug(f"   📚 Copying docs file: {item.relative_to(temp_path)}")
                         
                         # Calculate relative path
                         rel_path = item.relative_to(temp_path)

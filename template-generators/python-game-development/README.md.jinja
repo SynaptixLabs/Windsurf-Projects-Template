@@ -6,53 +6,72 @@ Built with **{{game_framework}}** and modern Python tooling for production-ready
 
 ## 🚀 Quick Start
 
-### Generated Project Setup
-This project was generated using the enhanced Python game development template. To begin development:
+### 🎮 Run Your Game Immediately
 
-1. **Open in Windsurf IDE**
+1. **Install Dependencies**
    ```bash
    cd {{project_name}}
-   windsurf .
+   poetry install
    ```
 
-2. **Execute Start-Coding Script**
-   
-   Use this simple prompt in Windsurf to begin:
-   
-   ```
-   I just generated this {{project_name}} project. Please run/execute the start-coding script in .commands/start-coding.md
+2. **Run the Game**
+   ```bash
+   poetry run python -m {{project_name.replace('-', '_')}}.main
    ```
    
-   Windsurf will:
-   - Execute comprehensive project initialization
-   - Configure development environment and quality gates
-   - Setup infrastructure with all dependencies
-   - Prepare structured development workflow
-   - Validate all components are working correctly
+   **Or use the convenient alias:**
+   ```bash
+   poetry run game
+   ```
 
-3. **Follow Structured Development**
-   
-   After initialization, continue with sprint-based development:
+3. **Play & Test**
+   - 🎯 A {{game_framework}} window will open with a simple interactive demo
+   - 🕹️ Use **WASD** or **arrow keys** to move the blue square
+   - 🎨 Watch the square change colors based on position
+   - 🚪 Press **ESC** or close the window to exit
+
+### 🛠️ Development Setup
+
+4. **Setup Development Environment**
+   ```bash
+   poetry run pre-commit install    # Setup code quality hooks
+   poetry run lint                  # Check code quality
+   poetry run test                  # Run tests
    ```
-   {% if use_sprint_based_todos -%}
-   I have completed initialization. Please help me begin Sprint 1 development from docs/TODO.{{project_slug}}.1.md
-   {% else -%}
-   I have completed initialization. Please help me begin developing the core functionality.
-   {% endif -%}
+
+5. **Open in Windsurf IDE** (Optional)
+   ```bash
+   windsurf .                       # Open project in Windsurf
+   ```
+   
+   Use this prompt in Windsurf to continue development:
+   ```
+   I just generated this {{project_name}} project and ran the basic game. Please help me implement the specific game features from docs/TODO.{{project_slug}}.1.md
    ```
 
 ## 📋 Command Scripts
 
-The `.commands/` directory contains project initialization:
+### Quick Commands
+```bash
+# Game Development
+poetry run game                  # Run your game
+poetry run dev                   # Development mode with debugging
+poetry run demo                  # Run interactive demo
 
-- `.commands/start-coding.md` - Complete project initialization and development continuation
+# Code Quality
+poetry run lint                  # Check code style and quality
+poetry run test                  # Run test suite
+poetry run ci                    # Run complete CI pipeline locally
 
-The **`state.md`** file (root level) tracks project progress and enables session continuation:
-- **Updated by Windsurf** after each sprint/milestone completion
-- **Read by Windsurf** when returning to the project
+# Project Management
+poetry run sprint-status         # Check current sprint progress
+```
+
+### Development Continuity
+The **`state.md`** file tracks project progress for Windsurf IDE:
+- **Updated automatically** after each sprint/milestone completion
 - **Ensures continuity** across development sessions
-
-This script provides Windsurf with specific, actionable instructions for setting up the development environment and maintaining project state.
+- **Guides development** based on current project state
 
 ## 🎮 {{project_name.title()}} Game Project
 

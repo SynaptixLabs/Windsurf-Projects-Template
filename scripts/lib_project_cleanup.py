@@ -9,7 +9,9 @@ Extracted from external_project_cleanup.py and enhanced_windsurf_generator_v3.py
 import shutil
 import logging
 from pathlib import Path
-from typing import List, Set, Optional
+from typing import List, Set, Optional, Dict
+import os
+import stat
 
 
 class ProjectCleaner:
@@ -156,9 +158,6 @@ class ProjectCleaner:
     
     def _fix_file_permissions(self, project_dir: Path) -> None:
         """Fix file permissions if needed (mainly for Unix systems)."""
-        import os
-        import stat
-        
         try:
             for file_path in project_dir.rglob('*'):
                 if file_path.is_file():

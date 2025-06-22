@@ -63,6 +63,7 @@ memory-profiler = "^0.61.0"
 [tool.poetry.scripts]
 # FIXED: Scripts pointing to actual Python functions
 {{project_name.replace('-', '_')}} = "{{project_name.replace('-', '_')}}.main:main"
+game = "{{project_name.replace('-', '_')}}.main:main"  # Convenient alias for running the game
 run = "scripts.cli:run"
 dev = "scripts.cli:dev"
 lint = "scripts.cli:lint"

@@ -1,303 +1,132 @@
 #!/usr/bin/env python3
 """
-GitHub Manager Library
+GitHub Manager Library - FINAL HTTPS VERSION v5.5
 
-Handles GitHub repository creation and management with multiple fallback methods.
-Consolidated from github_integration.py and enhanced_windsurf_generator_v3.py.
+This version defaults to using HTTPS for remote URLs to avoid SSH key issues.
+It ensures maximum compatibility for all users.
 """
 
 import os
 import subprocess
 import logging
+import time
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
-
+from typing import Optional
 
 class GitHubManager:
-    """Manages GitHub repository operations."""
-    
+    """Manages GitHub repository operations using HTTPS for pushes."""
+
     def __init__(self):
-        self.logger = logging.getLogger('github_manager')
-    
+        self.logger = logging.getLogger('windsurf_generator')
+
     def create_repository(
         self,
         project_name: str,
         description: str,
         project_dir: Path,
         org: str = "SynaptixLabs",
-        private: bool = False
+        private: bool = False,
+        auto_commit: bool = True
     ) -> Optional[str]:
-        """
-        Create GitHub repository with multiple fallback methods.
-        
-        Args:
-            project_name: Name of the repository
-            description: Repository description
-            project_dir: Local project directory
-            org: GitHub organization
-            private: Whether to make repository private
-            
-        Returns:
-            Repository URL if successful, None otherwise
-        """
+        self.logger.info(f"▶️ Starting HTTPS-based GitHub setup for: {project_name}")
         try:
-            # Method 1: Try GitHub CLI
-            success, repo_url = self._try_github_cli(project_name, description, org, private)
-            if success:
-                self._setup_git_repository(project_dir, project_name, org)
-                return repo_url
-            
-            # Method 2: Try GitHub API with token
-            success, repo_url = self._try_github_api(project_name, description, org, private)
-            if success:
-                self._setup_git_repository(project_dir, project_name, org)
-                return repo_url
-            
-            # Method 3: Provide manual instructions
-            self._provide_manual_github_setup(project_name, description, org, private)
+            if not self._initialize_local_repo(project_dir): return None
+            repo_url = self._create_remote_repo_on_github(project_name, description, org, private)
+            if not repo_url:
+                self._provide_manual_github_setup(project_name, org)
+                return None
+            if not self._link_local_to_remote(project_dir, org, project_name): return None
+            if auto_commit and not self._commit_push_and_verify(project_dir, project_name):
+                self.logger.error("❌ CRITICAL: The remote repository was created, but the code push failed.")
+            self.logger.info(f"✅ GitHub repository setup successful: {repo_url}")
+            return repo_url
+        except Exception as e:
+            self.logger.error(f"❌ An unexpected error occurred during GitHub setup: {e}")
             return None
-            
-        except Exception as e:
-            self.logger.error(f"❌ GitHub repository creation failed: {e}")
+
+    def _run_command(self, cmd: list[str], work_dir: Path, description: str, check=True) -> subprocess.CompletedProcess:
+        self.logger.info(f"  - {description}...")
+        try:
+            result = subprocess.run(cmd, cwd=str(work_dir), check=check, capture_output=True, text=True)
+            self.logger.info("    ✅ Success")
+            return result
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"    ❌ FAILED: {description}")
+            self.logger.error(f"      STDERR: {e.stderr.strip()}")
+            raise
+
+    def _initialize_local_repo(self, project_dir: Path) -> bool:
+        self.logger.info("🔧 Step 1: Initializing local Git repository.")
+        if (project_dir / ".git").exists():
+            self.logger.info("  - Git repository already exists.")
+            return True
+        try:
+            self._run_command(['git', 'init'], project_dir, "Running 'git init'")
+            # Set default branch name to 'main'
+            self._run_command(['git', 'branch', '-M', 'main'], project_dir, "Setting default branch to 'main'")
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    def _create_remote_repo_on_github(self, project_name, description, org, private) -> Optional[str]:
+        self.logger.info("🐙 Step 2: Creating remote repository on GitHub.")
+        cmd = ['gh', 'repo', 'create', f"{org}/{project_name}", '--description', description]
+        cmd.append('--private' if private else '--public')
+        try:
+            result = self._run_command(cmd, Path.cwd(), "Running 'gh repo create'")
+            return result.stdout.strip() or result.stderr.strip()
+        except subprocess.CalledProcessError as e:
+            if "already exists" in e.stderr.strip().lower():
+                repo_url = f"https://github.com/{org}/{project_name}"
+                self.logger.info(f"    ✅ Repository already exists on GitHub: {repo_url}")
+                return repo_url
             return None
-    
-    def _try_github_cli(
-        self,
-        project_name: str,
-        description: str,
-        org: str,
-        private: bool
-    ) -> Tuple[bool, Optional[str]]:
-        """Try GitHub CLI method."""
+
+    def _link_local_to_remote(self, project_dir: Path, org: str, project_name: str) -> bool:
+        self.logger.info("🔗 Step 3: Linking local and remote repositories.")
+        # --- THE KEY CHANGE: USE HTTPS URL ---
+        remote_url = f"https://github.com/{org}/{project_name}.git"
         try:
-            # Check if GitHub CLI is available
-            result = subprocess.run(['gh', '--version'], 
-                                  capture_output=True, text=True, check=False)
-            
-            if result.returncode != 0:
-                self.logger.debug("GitHub CLI not available")
-                return False, None
-            
-            # Check if authenticated
-            result = subprocess.run(['gh', 'auth', 'status'], 
-                                  capture_output=True, text=True, check=False)
-            
-            if result.returncode != 0:
-                self.logger.debug("GitHub CLI not authenticated")
-                return False, None
-            
-            self.logger.info("🔄 Attempting GitHub repository creation via CLI...")
-            
-            cmd = [
-                'gh', 'repo', 'create', f"{org}/{project_name}",
-                '--description', description,
-                '--add-readme'
-            ]
-            
-            if private:
-                cmd.append('--private')
+            remotes = self._run_command(['git', 'remote'], project_dir, "Checking existing remotes").stdout
+            if 'origin' in remotes.split():
+                self._run_command(['git', 'remote', 'set-url', 'origin', remote_url], project_dir, f"Updating remote URL to HTTPS: {remote_url}")
             else:
-                cmd.append('--public')
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-            
-            if result.returncode == 0:
-                repo_url = f"https://github.com/{org}/{project_name}"
-                self.logger.info(f"✅ GitHub repository created via CLI: {repo_url}")
-                return True, repo_url
-            else:
-                error_msg = result.stderr.strip()
-                if "already exists" in error_msg.lower():
-                    repo_url = f"https://github.com/{org}/{project_name}"
-                    self.logger.info(f"ℹ️ Repository already exists: {repo_url}")
-                    return True, repo_url
-                else:
-                    self.logger.debug(f"GitHub CLI failed: {error_msg}")
-                    return False, None
-                    
-        except FileNotFoundError:
-            self.logger.debug("GitHub CLI not found in PATH")
-            return False, None
-        except Exception as e:
-            self.logger.debug(f"GitHub CLI error: {e}")
-            return False, None
-    
-    def _try_github_api(
-        self,
-        project_name: str,
-        description: str,
-        org: str,
-        private: bool
-    ) -> Tuple[bool, Optional[str]]:
-        """Try GitHub API method."""
-        try:
-            import requests
-        except ImportError:
-            self.logger.debug("requests library not available")
-            return False, None
-        
-        token = os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN')
-        if not token:
-            self.logger.debug("No GitHub token found in environment")
-            return False, None
-        
-        try:
-            self.logger.info("🔄 Attempting GitHub repository creation via API...")
-            
-            headers = {
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/vnd.github.v3+json',
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-            
-            url = f"https://api.github.com/orgs/{org}/repos"
-            data = {
-                'name': project_name,
-                'description': description,
-                'private': private,
-                'auto_init': True
-            }
-            
-            response = requests.post(url, json=data, headers=headers, timeout=30)
-            
-            if response.status_code == 201:
-                repo_data = response.json()
-                repo_url = repo_data['html_url']
-                self.logger.info(f"✅ GitHub repository created via API: {repo_url}")
-                return True, repo_url
-            elif response.status_code == 422:
-                repo_url = f"https://github.com/{org}/{project_name}"
-                self.logger.info(f"ℹ️ Repository might already exist: {repo_url}")
-                return True, repo_url
-            else:
-                self.logger.debug(f"API failed: {response.status_code} - {response.text}")
-                return False, None
-                
-        except Exception as e:
-            self.logger.debug(f"GitHub API error: {e}")
-            return False, None
-    
-    def _setup_git_repository(self, project_dir: Path, project_name: str, org: str):
-        """Initialize git and set up remote."""
-        try:
-            original_cwd = os.getcwd()
-            os.chdir(project_dir)
-            
-            # Initialize git if not already done
-            if not (project_dir / ".git").exists():
-                subprocess.run(['git', 'init'], check=True, capture_output=True)
-                self.logger.debug("Git repository initialized")
-            
-            # Configure user if not set
-            try:
-                subprocess.run(['git', 'config', 'user.name'], 
-                              capture_output=True, text=True, check=True)
-            except subprocess.CalledProcessError:
-                subprocess.run(['git', 'config', 'user.name', 'Avidor'], 
-                              capture_output=True, text=True, check=True)
-                
-            try:
-                subprocess.run(['git', 'config', 'user.email'], 
-                              capture_output=True, text=True, check=True)
-            except subprocess.CalledProcessError:
-                subprocess.run(['git', 'config', 'user.email', 'avidor@synaptixlabs.ai'], 
-                              capture_output=True, text=True, check=True)
-            
-            # Set up remote origin
-            remote_url = f"git@github.com:{org}/{project_name}.git"
-            
-            # Remove existing origin if it exists
-            subprocess.run(['git', 'remote', 'remove', 'origin'], 
-                          capture_output=True, check=False)
-            
-            # Add new origin
-            subprocess.run(['git', 'remote', 'add', 'origin', remote_url], 
-                          check=True, capture_output=True)
-            
-            self.logger.info(f"🔗 Git remote origin set: {remote_url}")
-            os.chdir(original_cwd)
-            
-        except Exception as e:
-            self.logger.warning(f"Git setup warning: {e}")
-            if 'original_cwd' in locals():
-                os.chdir(original_cwd)
-    
-    def _provide_manual_github_setup(
-        self,
-        project_name: str,
-        description: str,
-        org: str,
-        private: bool
-    ):
-        """Provide manual setup instructions."""
-        self.logger.info("📋 Manual GitHub repository setup required:")
-        self.logger.info(f"   1. Go to: https://github.com/{org}")
-        self.logger.info(f"   2. Click 'New repository'")
-        self.logger.info(f"   3. Repository name: {project_name}")
-        self.logger.info(f"   4. Description: {description}")
-        self.logger.info(f"   5. Make it {'private' if private else 'public'} and initialize with README")
-        self.logger.info(f"   6. Run: git remote add origin git@github.com:{org}/{project_name}.git")
-    
-    def check_git_status(self, project_dir: Path) -> Dict[str, Any]:
-        """Check current git status of project."""
-        status = {
-            'git_initialized': False,
-            'has_remote': False,
-            'remote_url': None,
-            'has_commits': False
-        }
-        
-        try:
-            original_cwd = os.getcwd()
-            os.chdir(project_dir)
-            
-            # Check if git is initialized
-            if (project_dir / ".git").exists():
-                status['git_initialized'] = True
-                
-                # Check for remote
-                try:
-                    result = subprocess.run(['git', 'remote', 'get-url', 'origin'], 
-                                          capture_output=True, text=True, check=True)
-                    status['has_remote'] = True
-                    status['remote_url'] = result.stdout.strip()
-                except subprocess.CalledProcessError:
-                    pass
-                
-                # Check for commits
-                try:
-                    result = subprocess.run(['git', 'log', '--oneline', '-1'], 
-                                          capture_output=True, text=True, check=True)
-                    status['has_commits'] = bool(result.stdout.strip())
-                except subprocess.CalledProcessError:
-                    pass
-            
-            os.chdir(original_cwd)
-            
-        except Exception as e:
-            self.logger.debug(f"Git status check error: {e}")
-            if 'original_cwd' in locals():
-                os.chdir(original_cwd)
-        
-        return status
-    
-    def check_github_cli_available(self) -> bool:
-        """Check if GitHub CLI is available and authenticated."""
-        try:
-            # Check if gh is installed
-            result = subprocess.run(['gh', '--version'], 
-                                  capture_output=True, text=True, check=False)
-            
-            if result.returncode != 0:
-                return False
-            
-            # Check if authenticated
-            result = subprocess.run(['gh', 'auth', 'status'], 
-                                  capture_output=True, text=True, check=False)
-            
-            return result.returncode == 0
-            
-        except FileNotFoundError:
+                self._run_command(['git', 'remote', 'add', 'origin', remote_url], project_dir, f"Adding remote 'origin' with HTTPS URL: {remote_url}")
+            return True
+        except subprocess.CalledProcessError:
             return False
-        except Exception:
+
+    def _commit_push_and_verify(self, project_dir: Path, project_name: str) -> bool:
+        self.logger.info("🚀 Step 4: Committing, Pushing, and Verifying.")
+        try:
+            self._run_command(['git', 'config', 'user.name', 'Avidor'], project_dir, "Configuring git user name")
+            self._run_command(['git', 'config', 'user.email', 'avidor@synaptixlabs.ai'], project_dir, "Configuring git user email")
+            self._run_command(['git', 'add', '.'], project_dir, "Staging all files")
+            commit_message = f"🎉 Initial commit: {project_name}"
+            self._run_command(['git', 'commit', '--allow-empty', '-m', commit_message], project_dir, "Creating initial commit")
+            local_hash = self._run_command(['git', 'rev-parse', 'HEAD'], project_dir, "Getting local commit hash").stdout.strip()
+            self._run_command(['git', 'push', '-u', 'origin', 'main'], project_dir, "Pushing to 'main' branch")
+            return self._verify_commit_on_remote(project_dir, local_hash)
+        except subprocess.CalledProcessError:
             return False
+
+    def _verify_commit_on_remote(self, project_dir: Path, local_commit_hash: str) -> bool:
+        self.logger.info("🔍 Step 5: Verifying commit on remote...")
+        timeout = 30
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                result = self._run_command(['git', 'ls-remote', 'origin', 'HEAD'], project_dir, "Checking remote HEAD", check=False)
+                if result.returncode == 0 and local_commit_hash in result.stdout:
+                    self.logger.info("    ✅ VERIFIED: Commit has arrived on remote.")
+                    return True
+                time.sleep(3)
+            except subprocess.CalledProcessError:
+                time.sleep(3)
+        self.logger.error(f"    ❌ VERIFICATION FAILED: Timeout after {timeout} seconds.")
+        return False
+        
+    def _provide_manual_github_setup(self, project_name, org):
+        self.logger.info("📋 Manual GitHub Setup Required:")
+        self.logger.info(f"   Create repo manually at: https://github.com/new")
+        self.logger.info(f"   Then run: git remote add origin https://github.com/{org}/{project_name}.git && git push -u origin main")

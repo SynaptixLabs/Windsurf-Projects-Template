@@ -8,39 +8,285 @@ Project Requirements:
 {% else -%}
 A Python {{game_framework}} game built with modern development practices.
 
-TODO: Implement your specific game logic based on your requirements.
+This is a minimal, functional starting point that initializes {{game_framework}} 
+and opens a game window. Expand this file to implement your specific game logic.
 {% endif -%}
 """
 
 import sys
 import logging
-from pathlib import Path
-from typing import Optional
+from typing import Tuple
 
 {% if game_framework == "pygame" -%}
 try:
     import pygame
 except ImportError:
-    print("pygame is not installed. Install it with: poetry add pygame")
+    print("❌ pygame is not installed. Install it with: poetry add pygame")
+    print("💡 Or run: poetry install  (if already in pyproject.toml)")
     sys.exit(1)
 {% elif game_framework == "arcade" -%}
 try:
     import arcade
 except ImportError:
-    print("arcade is not installed. Install it with: poetry add arcade")
+    print("❌ arcade is not installed. Install it with: poetry add arcade")
+    print("💡 Or run: poetry install  (if already in pyproject.toml)")
     sys.exit(1)
 {% elif game_framework == "pyglet" -%}
 try:
     import pyglet
 except ImportError:
-    print("pyglet is not installed. Install it with: poetry add pyglet")
+    print("❌ pyglet is not installed. Install it with: poetry add pyglet")
+    print("💡 Or run: poetry install  (if already in pyproject.toml)")
     sys.exit(1)
 {% endif -%}
 
-from {{project_name.replace('-', '_')}}.core.game_engine import GameEngine
-from {{project_name.replace('-', '_')}}.core.config import GameConfig
-{% if include_logging -%}
-from {{project_name.replace('-', '_')}}.utils.logging_setup import setup_logging
+
+# Game Constants
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+WINDOW_TITLE = "{{project_name}}"
+TARGET_FPS = 60
+
+# Colors (RGB)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BLUE = (0, 100, 200)
+GREEN = (0, 200, 100)
+RED = (200, 100, 0)
+
+
+{% if game_framework == "pygame" -%}
+class {{project_name.replace('-', '_').title().replace('_', '')}}Game:
+    """Minimal functional game that opens a window and handles basic events."""
+    
+    def __init__(self):
+        """Initialize the game."""
+        self.width = WINDOW_WIDTH
+        self.height = WINDOW_HEIGHT
+        self.running = False
+        self.clock = None
+        self.screen = None
+        
+        # Simple game state
+        self.player_pos = [self.width // 2, self.height // 2]
+        self.player_color = BLUE
+        
+    def initialize(self) -> bool:
+        """Initialize pygame and create the game window."""
+        try:
+            pygame.init()
+            self.screen = pygame.display.set_mode((self.width, self.height))
+            pygame.display.set_caption(WINDOW_TITLE)
+            self.clock = pygame.time.Clock()
+            
+            print(f"✅ {{project_name}} initialized successfully!")
+            print(f"🎮 Window: {self.width}x{self.height}")
+            print(f"🎯 Target FPS: {TARGET_FPS}")
+            print(f"💡 Use WASD or arrow keys to move the blue square")
+            print(f"🚪 Press ESC or close window to exit")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to initialize game: {e}")
+            return False
+    
+    def handle_events(self) -> None:
+        """Handle pygame events."""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
+        
+        # Handle continuous key presses for smooth movement
+        keys = pygame.key.get_pressed()
+        move_speed = 5
+        
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.player_pos[0] = max(0, self.player_pos[0] - move_speed)
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.player_pos[0] = min(self.width - 20, self.player_pos[0] + move_speed)
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            self.player_pos[1] = max(0, self.player_pos[1] - move_speed)
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.player_pos[1] = min(self.height - 20, self.player_pos[1] + move_speed)
+    
+    def update(self, dt: float) -> None:
+        """Update game state."""
+        # TODO: Add your game logic here
+        # For now, just change color based on position
+        center_x, center_y = self.width // 2, self.height // 2
+        distance_from_center = ((self.player_pos[0] - center_x) ** 2 + 
+                               (self.player_pos[1] - center_y) ** 2) ** 0.5
+        
+        if distance_from_center < 50:
+            self.player_color = GREEN  # Green when near center
+        elif distance_from_center > 200:
+            self.player_color = RED    # Red when far from center
+        else:
+            self.player_color = BLUE   # Blue otherwise
+    
+    def render(self) -> None:
+        """Render the game."""
+        # Clear screen
+        self.screen.fill(BLACK)
+        
+        # Draw a simple grid pattern
+        grid_size = 50
+        grid_color = (30, 30, 30)
+        for x in range(0, self.width, grid_size):
+            pygame.draw.line(self.screen, grid_color, (x, 0), (x, self.height), 1)
+        for y in range(0, self.height, grid_size):
+            pygame.draw.line(self.screen, grid_color, (0, y), (self.width, y), 1)
+        
+        # Draw player as a simple square
+        player_rect = pygame.Rect(self.player_pos[0], self.player_pos[1], 20, 20)
+        pygame.draw.rect(self.screen, self.player_color, player_rect)
+        
+        # Draw center marker
+        center_x, center_y = self.width // 2, self.height // 2
+        pygame.draw.circle(self.screen, WHITE, (center_x, center_y), 5, 2)
+        
+        # Update display
+        pygame.display.flip()
+    
+    def run(self) -> int:
+        """Main game loop."""
+        if not self.initialize():
+            return 1
+        
+        self.running = True
+        frame_count = 0
+        
+        try:
+            while self.running:
+                # Calculate delta time
+                dt = self.clock.tick(TARGET_FPS) / 1000.0
+                frame_count += 1
+                
+                # Handle events
+                self.handle_events()
+                
+                # Update game state
+                self.update(dt)
+                
+                # Render frame
+                self.render()
+                
+                # Optional: Display FPS in window title every 60 frames
+                if frame_count % 60 == 0:
+                    fps = self.clock.get_fps()
+                    pygame.display.set_caption(f"{WINDOW_TITLE} - FPS: {fps:.1f}")
+                    
+        except Exception as e:
+            print(f"❌ Game error: {e}")
+            return 1
+        finally:
+            pygame.quit()
+            
+        print("👋 Thanks for playing {{project_name}}!")
+        return 0
+
+{% elif game_framework == "arcade" -%}
+class {{project_name.replace('-', '_').title().replace('_', '')}}Game(arcade.Window):
+    """Minimal functional game using Arcade."""
+    
+    def __init__(self):
+        super().__init__(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
+        arcade.set_background_color(arcade.color.BLACK)
+        
+        # Simple game state
+        self.player_x = WINDOW_WIDTH // 2
+        self.player_y = WINDOW_HEIGHT // 2
+        
+        print(f"✅ {{project_name}} initialized successfully!")
+        print(f"🎮 Window: {WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+        print(f"💡 Use WASD or arrow keys to move the blue square")
+        
+    def on_draw(self):
+        """Render the game."""
+        self.clear()
+        
+        # Draw a simple square as the player
+        arcade.draw_rectangle_filled(self.player_x, self.player_y, 20, 20, arcade.color.BLUE)
+        
+        # Draw center marker
+        arcade.draw_circle_filled(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, 5, arcade.color.WHITE)
+    
+    def on_key_press(self, key, modifiers):
+        """Handle key press events."""
+        move_speed = 10
+        
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.player_x = max(10, self.player_x - move_speed)
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
+            self.player_x = min(WINDOW_WIDTH - 10, self.player_x + move_speed)
+        elif key == arcade.key.UP or key == arcade.key.W:
+            self.player_y = min(WINDOW_HEIGHT - 10, self.player_y + move_speed)
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.player_y = max(10, self.player_y - move_speed)
+        elif key == arcade.key.ESCAPE:
+            self.close()
+    
+    def run(self) -> int:
+        """Start the game."""
+        try:
+            arcade.run()
+            return 0
+        except Exception as e:
+            print(f"❌ Game error: {e}")
+            return 1
+
+{% elif game_framework == "pyglet" -%}
+class {{project_name.replace('-', '_').title().replace('_', '')}}Game:
+    """Minimal functional game using Pyglet."""
+    
+    def __init__(self):
+        self.window = pyglet.window.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
+        self.player_x = WINDOW_WIDTH // 2
+        self.player_y = WINDOW_HEIGHT // 2
+        
+        # Set up event handlers
+        self.window.on_draw = self.on_draw
+        self.window.on_key_press = self.on_key_press
+        
+        print(f"✅ {{project_name}} initialized successfully!")
+        print(f"🎮 Window: {WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+        print(f"💡 Use WASD or arrow keys to move")
+    
+    def on_draw(self):
+        """Render the game."""
+        self.window.clear()
+        
+        # Simple drawing (pyglet requires more manual drawing)
+        # This is a basic example - expand as needed
+        pass
+    
+    def on_key_press(self, symbol, modifiers):
+        """Handle key press events."""
+        move_speed = 10
+        
+        if symbol == pyglet.window.key.LEFT or symbol == pyglet.window.key.A:
+            self.player_x = max(10, self.player_x - move_speed)
+        elif symbol == pyglet.window.key.RIGHT or symbol == pyglet.window.key.D:
+            self.player_x = min(WINDOW_WIDTH - 10, self.player_x + move_speed)
+        elif symbol == pyglet.window.key.UP or symbol == pyglet.window.key.W:
+            self.player_y = min(WINDOW_HEIGHT - 10, self.player_y + move_speed)
+        elif symbol == pyglet.window.key.DOWN or symbol == pyglet.window.key.S:
+            self.player_y = max(10, self.player_y - move_speed)
+        elif symbol == pyglet.window.key.ESCAPE:
+            self.window.close()
+    
+    def run(self) -> int:
+        """Start the game."""
+        try:
+            pyglet.app.run()
+            return 0
+        except Exception as e:
+            print(f"❌ Game error: {e}")
+            return 1
 {% endif -%}
 
 
@@ -48,49 +294,26 @@ def main() -> int:
     """
     Main entry point for {{project_name}}.
     
+    Creates and runs the game instance.
+    
     Returns:
         Exit code: 0 for success, non-zero for error
     """
+    print("🚀 Starting {{project_name}}...")
+    
     try:
-        {% if include_logging -%}
-        # Setup logging
-        setup_logging()
-        logger = logging.getLogger(__name__)
-        logger.info("Starting {{project_name}}")
-        {% endif -%}
+        # Create and run the game
+        game = {{project_name.replace('-', '_').title().replace('_', '')}}Game()
+        result = game.run()
         
-        # Load configuration
-        config = GameConfig()
-        
-        {% if game_framework == "pygame" -%}
-        # Initialize pygame
-        pygame.init()
-        logger.info("Pygame initialized successfully") if include_logging else None
-        {% endif -%}
-        
-        # Create and run game engine
-        engine = GameEngine(config)
-        result = engine.run()
-        
-        {% if include_logging -%}
-        logger.info("Game finished successfully")
-        {% endif -%}
         return result
         
     except KeyboardInterrupt:
-        print("\n{{project_name}} interrupted by user")
+        print("\n⚠️ {{project_name}} interrupted by user")
         return 0
     except Exception as e:
-        {% if include_logging -%}
-        logger.error(f"Game error: {e}", exc_info=True)
-        {% endif -%}
-        print(f"Error running {{project_name}}: {e}")
+        print(f"❌ Error running {{project_name}}: {e}")
         return 1
-    finally:
-        {% if game_framework == "pygame" -%}
-        # Cleanup pygame
-        pygame.quit()
-        {% endif -%}
 
 
 if __name__ == "__main__":

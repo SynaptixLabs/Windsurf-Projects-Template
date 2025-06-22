@@ -74,7 +74,8 @@ class ProjectValidator:
                 ("Python Package Structure", self._check_python_package_structure),
                 ("Configuration Files", self._check_configuration_files),
                 ("Documentation Structure", self._check_documentation_structure),
-                ("Testing Structure", self._check_testing_structure)
+                ("Testing Structure", self._check_testing_structure),
+                ("Git Repository", self._check_git_repository)  # NEW: Git validation
             ]
             
             all_passed = True
@@ -290,6 +291,59 @@ class ProjectValidator:
         
         return True, status_info
     
+    def _check_git_repository(self, project_dir: Path) -> Tuple[bool, str]:
+        """Check Git repository status and configuration."""
+        import subprocess
+        
+        issues = []
+        git_status = {
+            'initialized': False,
+            'has_commits': False,
+            'has_remote': False,
+            'remote_url': None
+        }
+        
+        # Check if git is initialized
+        git_dir = project_dir / ".git"
+        if not git_dir.exists():
+            issues.append("Git repository not initialized")
+        else:
+            git_status['initialized'] = True
+            
+            try:
+                # Check for commits (explicit cwd)
+                result = subprocess.run(['git', 'log', '-1', '--oneline'], 
+                                      cwd=project_dir, capture_output=True, 
+                                      text=True, check=False)
+                if result.returncode == 0 and result.stdout.strip():
+                    git_status['has_commits'] = True
+                else:
+                    issues.append("No commits found")
+                
+                # Check for remote origin (explicit cwd)
+                result = subprocess.run(['git', 'remote', 'get-url', 'origin'], 
+                                      cwd=project_dir, capture_output=True, 
+                                      text=True, check=False)
+                if result.returncode == 0 and result.stdout.strip():
+                    git_status['has_remote'] = True
+                    git_status['remote_url'] = result.stdout.strip()
+                else:
+                    issues.append("No remote 'origin' configured")
+                
+            except Exception as e:
+                issues.append(f"Git command failed: {e}")
+        
+        # Determine overall status
+        if not issues:
+            status_msg = f"Git repository properly configured"
+            if git_status['remote_url']:
+                # Extract repo name from URL for cleaner display
+                repo_name = git_status['remote_url'].split('/')[-1].replace('.git', '')
+                status_msg += f" (remote: {repo_name})"
+            return True, status_msg
+        else:
+            return False, f"Git issues: {'; '.join(issues)}"
+    
     def _generate_validation_report(self, project_dir: Path, results: List[Tuple[str, bool, str]]) -> None:
         """Generate a validation report file."""
         try:
@@ -355,7 +409,8 @@ class ProjectValidator:
             "Python Package Structure": "Ensure src/ contains a proper Python package with __init__.py",
             "Configuration Files": "Fix syntax errors in configuration files",
             "Documentation Structure": "Add documentation files to docs/ directory",
-            "Testing Structure": "Add test files and pytest configuration"
+            "Testing Structure": "Add test files and pytest configuration",
+            "Git Repository": "Initialize git repository, make initial commit, and configure remote origin"
         }
         return recommendations.get(check_name, "Review and fix the identified issues")
     
@@ -373,7 +428,8 @@ class ProjectValidator:
             'python': self._check_python_package_structure,
             'config': self._check_configuration_files,
             'docs': self._check_documentation_structure,
-            'tests': self._check_testing_structure
+            'tests': self._check_testing_structure,
+            'git': self._check_git_repository  # NEW: Git validation
         }
         
         if component not in component_checks:
@@ -396,7 +452,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Project Validator Test")
     parser.add_argument("project_dir", type=Path, help="Project directory to validate")
-    parser.add_argument("--component", choices=['files', 'directories', 'artifacts', 'python', 'config', 'docs', 'tests'],
+    parser.add_argument("--component", choices=['files', 'directories', 'artifacts', 'python', 'config', 'docs', 'tests', 'git'],
                        help="Validate specific component only")
     
     args = parser.parse_args()

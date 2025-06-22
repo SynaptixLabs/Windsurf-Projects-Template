@@ -58,3 +58,35 @@ htmlcov/
 
 # Windsurf specific
 .windsurf/
+
+# === ENHANCED: Prevent temporary/debug files ===
+# Debug and fix scripts
+debug_*.py
+fix_*.py
+quick_*.py
+test_all_*.py
+test_phase_*.py
+test_autocommit*.py
+complete_*.py
+validate_*.py
+
+# Temporary documentation
+*_FIX.md
+*_TEMP.md
+
+# Cleanup scripts (except the main one)
+cleanup_*.py
+
+# Backup files
+*.bak
+*.backup
+*_backup.*
+
+# Generated project examples (keep only template references)
+space-invaders/
+4-in-a-row-game/
+example-generated-*/
+
+# Log files from generator runs
+project_generator_*.log
+windsurf_generator_*.log
