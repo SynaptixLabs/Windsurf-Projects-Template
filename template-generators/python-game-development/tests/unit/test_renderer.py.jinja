@@ -1,0 +1,185 @@
+"""Tests for renderer."""
+
+import pytest
+{% if game_framework == 'pygame' -%}
+from unittest.mock import Mock, patch
+{% endif -%}
+
+from {{ project_name | replace('-', '_') }}.ui.renderer import Renderer
+from {{ project_name | replace('-', '_') }}.config.game_settings import GameSettings
+
+
+class TestRenderer:
+    """Test Renderer functionality."""
+    
+    @pytest.fixture
+    def config(self):
+        """Create test configuration."""
+        return GameSettings(
+            window_width=800,
+            window_height=600,
+            game_title="Test Game",
+            background_color=(32, 32, 32)
+        )
+    
+    {% if game_framework == 'pygame' -%}
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_renderer_initialization(self, mock_pygame, config):
+        """Test renderer initialization."""
+        mock_screen = Mock()
+        mock_pygame.display.set_mode.return_value = mock_screen
+        
+        renderer = Renderer(config)
+        
+        # Verify pygame initialization
+        mock_pygame.init.assert_called_once()
+        mock_pygame.display.set_mode.assert_called_once_with((800, 600))
+        mock_pygame.display.set_caption.assert_called_once_with("Test Game")
+        
+        # Verify renderer state
+        assert renderer.config == config
+        assert renderer.screen == mock_screen
+    
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_clear_screen_with_screen(self, mock_pygame, config):
+        """Test screen clearing when screen exists."""
+        mock_screen = Mock()
+        mock_pygame.display.set_mode.return_value = mock_screen
+        
+        renderer = Renderer(config)
+        renderer.clear()
+        
+        mock_screen.fill.assert_called_once_with(config.background_color)
+    
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_clear_screen_without_screen(self, mock_pygame, config):
+        """Test screen clearing when screen is None."""
+        mock_pygame.display.set_mode.return_value = None
+        
+        renderer = Renderer(config)
+        renderer.screen = None
+        
+        # Should not raise exception
+        renderer.clear()
+    
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_get_screen(self, mock_pygame, config):
+        """Test getting screen surface."""
+        mock_screen = Mock()
+        mock_pygame.display.set_mode.return_value = mock_screen
+        
+        renderer = Renderer(config)
+        
+        assert renderer.get_screen() == mock_screen
+    
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_get_screen_none(self, mock_pygame, config):
+        """Test getting screen when None."""
+        mock_pygame.display.set_mode.return_value = None
+        
+        renderer = Renderer(config)
+        
+        assert renderer.get_screen() is None
+    
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_shutdown(self, mock_pygame, config):
+        """Test renderer shutdown."""
+        renderer = Renderer(config)
+        renderer.shutdown()
+        
+        mock_pygame.quit.assert_called_once()
+    
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_present(self, mock_pygame, config):
+        """Test frame presentation."""
+        renderer = Renderer(config)
+        
+        # Should not raise exception (no-op method)
+        renderer.present()
+    
+    {% else -%}
+    def test_renderer_initialization(self, config):
+        """Test renderer initialization."""
+        renderer = Renderer(config)
+        
+        assert renderer.config == config
+        assert renderer.screen is None  # Default for non-pygame
+    
+    def test_clear_screen(self, config):
+        """Test screen clearing."""
+        renderer = Renderer(config)
+        
+        # Should not raise exception
+        renderer.clear()
+    
+    def test_get_screen(self, config):
+        """Test getting screen surface."""
+        renderer = Renderer(config)
+        
+        assert renderer.get_screen() is None  # Default implementation
+    
+    def test_shutdown(self, config):
+        """Test renderer shutdown."""
+        renderer = Renderer(config)
+        
+        # Should not raise exception
+        renderer.shutdown()
+    
+    def test_present(self, config):
+        """Test frame presentation."""
+        renderer = Renderer(config)
+        
+        # Should not raise exception (no-op method)
+        renderer.present()
+    {% endif -%}
+    
+    def test_config_access(self, config):
+        """Test configuration access."""
+        renderer = Renderer(config)
+        
+        assert renderer.config.window_width == 800
+        assert renderer.config.window_height == 600
+        assert renderer.config.game_title == "Test Game"
+        assert renderer.config.background_color == (32, 32, 32)
+
+
+class TestRendererIntegration:
+    """Integration tests for renderer."""
+    
+    @pytest.fixture
+    def config(self):
+        """Create test configuration."""
+        return GameSettings(
+            window_width=400,
+            window_height=300,
+            game_title="Integration Test",
+            background_color=(64, 64, 64)
+        )
+    
+    {% if game_framework == 'pygame' -%}
+    @patch('{{ project_name | replace("-", "_") }}.ui.renderer.pygame')
+    def test_full_render_cycle(self, mock_pygame, config):
+        """Test full render cycle."""
+        mock_screen = Mock()
+        mock_pygame.display.set_mode.return_value = mock_screen
+        
+        renderer = Renderer(config)
+        
+        # Simulate render cycle
+        renderer.clear()
+        renderer.present()
+        renderer.shutdown()
+        
+        # Verify calls
+        mock_screen.fill.assert_called_with(config.background_color)
+        mock_pygame.quit.assert_called_once()
+    {% else -%}
+    def test_full_render_cycle(self, config):
+        """Test full render cycle."""
+        renderer = Renderer(config)
+        
+        # Should not raise exceptions
+        renderer.clear()
+        renderer.present()
+        renderer.shutdown()
+    {% endif -%}

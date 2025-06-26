@@ -1,0 +1,344 @@
+"""Tests for game logic."""
+
+import pytest
+
+from {{ project_name | replace('-', '_') }}.core.constants import GameResult, GameState
+from {{ project_name | replace('-', '_') }}.game.game_logic import (
+    BoardGameLogic,
+    ExampleGameLogic,
+    GameAction,
+    GameLogicState,
+    RealTimeGameLogic,
+    SimpleAction,
+)
+
+# --- FIX: Create concrete implementations for testing ---
+
+class ConcreteBoardGame(BoardGameLogic):
+    """A concrete implementation of BoardGameLogic for testing."""
+    def is_valid_action(self, action: GameAction) -> bool:
+        return True
+    def apply_action(self, action: GameAction) -> bool:
+        return True
+    def get_valid_actions(self) -> list[GameAction]:
+        return []
+    def check_game_end(self) -> GameResult:
+        return GameResult.ONGOING
+
+class ConcreteRealTimeGame(RealTimeGameLogic):
+    """A concrete implementation of RealTimeGameLogic for testing."""
+    def is_valid_action(self, action: GameAction) -> bool:
+        return True
+    def apply_action(self, action: GameAction) -> bool:
+        return True
+    def get_valid_actions(self) -> list[GameAction]:
+        return []
+    def check_game_end(self) -> GameResult:
+        return GameResult.ONGOING
+
+# --- End of FIX ---
+
+
+class TestGameLogicState:
+    """Test GameLogicState functionality."""
+
+    def test_initial_state(self):
+        """Test initial game state."""
+        state = GameLogicState()
+        assert state.current_state == GameState.MENU
+        assert state.current_player == 1
+        assert state.turn_count == 0
+        assert state.score == {}
+        assert state.game_data == {}
+
+    def test_is_game_active(self):
+        """Test game active check."""
+        state = GameLogicState()
+        assert not state.is_game_active()
+
+        state.current_state = GameState.PLAYING
+        assert state.is_game_active()
+
+        state.current_state = GameState.PAUSED
+        assert not state.is_game_active()
+
+    def test_switch_player(self):
+        """Test player switching."""
+        state = GameLogicState()
+        initial_player = state.current_player
+        initial_turn = state.turn_count
+
+        state.switch_player()
+
+        assert state.current_player != initial_player
+        assert state.turn_count == initial_turn + 1
+
+        # Test switching back
+        state.switch_player()
+        assert state.current_player == initial_player
+
+    def test_reset(self):
+        """Test state reset."""
+        state = GameLogicState()
+
+        # Modify state
+        state.current_state = GameState.PLAYING
+        state.current_player = 2
+        state.turn_count = 5
+        state.score[1] = 100
+        state.game_data["test"] = "value"
+
+        # Reset
+        state.reset()
+
+        # Verify reset
+        assert state.current_state == GameState.MENU
+        assert state.current_player == 1
+        assert state.turn_count == 0
+        assert state.score == {}
+        assert state.game_data == {}
+
+
+class TestSimpleAction:
+    """Test SimpleAction functionality."""
+
+    def test_action_creation(self):
+        """Test action creation."""
+        action = SimpleAction("test_action", {"data": "value"})
+        assert action.action_type == "test_action"
+        assert action.data == {"data": "value"}
+
+    def test_action_validation(self):
+        """Test action validation."""
+        valid_action = SimpleAction("test")
+        invalid_action = SimpleAction(None)
+
+        assert valid_action.is_valid()
+        assert not invalid_action.is_valid()
+
+    def test_action_execution(self):
+        """Test action execution."""
+        action = SimpleAction("test_action")
+        state = GameLogicState()
+
+        # Should return the same state (no-op implementation)
+        result_state = action.execute(state)
+        assert result_state is state
+
+
+class TestExampleGameLogic:
+    """Test ExampleGameLogic functionality."""
+
+    @pytest.fixture
+    def game_logic(self):
+        """Create game logic instance."""
+        return ExampleGameLogic()
+
+    def test_initialization(self, game_logic):
+        """Test game logic initialization."""
+        assert game_logic.game_state is not None
+        assert game_logic.game_state.current_state == GameState.MENU
+
+    def test_new_game(self, game_logic):
+        """Test starting new game."""
+        game_logic.start_new_game()
+        assert game_logic.game_state.current_state == GameState.PLAYING
+
+    def test_pause_resume(self, game_logic):
+        """Test pause/resume functionality."""
+        game_logic.start_new_game()
+
+        # Test pause
+        game_logic.pause_game()
+        assert game_logic.game_state.current_state == GameState.PAUSED
+
+        # Test resume
+        game_logic.resume_game()
+        assert game_logic.game_state.current_state == GameState.PLAYING
+
+        # Test pause from non-playing state
+        game_logic.game_state.current_state = GameState.MENU
+        original_state = game_logic.game_state.current_state
+        game_logic.pause_game()
+        assert game_logic.game_state.current_state == original_state  # Should not change
+
+    def test_end_game(self, game_logic):
+        """Test ending game."""
+        game_logic.start_new_game()
+        game_logic.end_game()
+        assert game_logic.game_state.current_state == GameState.GAME_OVER
+
+    def test_invalid_action_when_not_playing(self, game_logic):
+        """Test that actions are invalid when game is not active."""
+        action = SimpleAction("test")
+
+        # Game not started
+        assert not game_logic.is_valid_action(action)
+
+        # Game paused
+        game_logic.start_new_game()
+        game_logic.pause_game()
+        assert not game_logic.is_valid_action(action)
+
+        # Game over
+        game_logic.end_game()
+        assert not game_logic.is_valid_action(action)
+
+    def test_valid_actions_empty_when_inactive(self, game_logic):
+        """Test that no valid actions when game is inactive."""
+        assert game_logic.get_valid_actions() == []
+
+        game_logic.start_new_game()
+        game_logic.pause_game()
+        assert game_logic.get_valid_actions() == []
+
+    def test_check_game_end_returns_ongoing(self, game_logic):
+        """Test that game end check returns ongoing by default."""
+        result = game_logic.check_game_end()
+        assert result == GameResult.ONGOING
+
+
+class TestBoardGameLogic:
+    """Test BoardGameLogic functionality."""
+
+    @pytest.fixture
+    def board_game(self):
+        """Create board game logic instance."""
+        # --- FIX: Instantiate the concrete test class ---
+        return ConcreteBoardGame(board_width=3, board_height=3)
+
+    def test_board_initialization(self, board_game):
+        """Test board initialization."""
+        assert board_game.board_width == 3
+        assert board_game.board_height == 3
+        assert len(board_game.board) == 3
+        assert len(board_game.board[0]) == 3
+
+        # All cells should be None initially
+        for row in board_game.board:
+            for cell in row:
+                assert cell is None
+
+    def test_get_set_cell(self, board_game):
+        """Test getting and setting board cells."""
+        # Test valid positions
+        assert board_game.get_cell(0, 0) is None
+        assert board_game.set_cell(0, 0, "X")
+        assert board_game.get_cell(0, 0) == "X"
+
+        # Test invalid positions
+        assert board_game.get_cell(-1, 0) is None
+        assert board_game.get_cell(0, -1) is None
+        assert board_game.get_cell(3, 0) is None
+        assert board_game.get_cell(0, 3) is None
+
+        assert not board_game.set_cell(-1, 0, "X")
+        assert not board_game.set_cell(0, -1, "X")
+        assert not board_game.set_cell(3, 0, "X")
+        assert not board_game.set_cell(0, 3, "X")
+
+    def test_is_position_valid(self, board_game):
+        """Test position validation."""
+        # Valid positions
+        assert board_game.is_position_valid(0, 0)
+        assert board_game.is_position_valid(2, 2)
+        assert board_game.is_position_valid(1, 1)
+
+        # Invalid positions
+        assert not board_game.is_position_valid(-1, 0)
+        assert not board_game.is_position_valid(0, -1)
+        assert not board_game.is_position_valid(3, 0)
+        assert not board_game.is_position_valid(0, 3)
+
+    def test_reset_board(self, board_game):
+        """Test board reset."""
+        # Set some values
+        board_game.set_cell(0, 0, "X")
+        board_game.set_cell(1, 1, "O")
+
+        # Reset
+        board_game.reset_board()
+
+        # Verify all cells are None
+        for row in board_game.board:
+            for cell in row:
+                assert cell is None
+
+
+class TestRealTimeGameLogic:
+    """Test RealTimeGameLogic functionality."""
+
+    @pytest.fixture
+    def realtime_game(self):
+        """Create real-time game logic instance."""
+        # --- FIX: Instantiate the concrete test class ---
+        return ConcreteRealTimeGame()
+
+    def test_initialization(self, realtime_game):
+        """Test real-time game initialization."""
+        assert realtime_game.entities == []
+        assert realtime_game.time_scale == 1.0
+
+    def test_add_remove_entity(self, realtime_game):
+        """Test entity management."""
+        class MockEntity:
+            def update(self, dt):
+                pass
+
+        entity = MockEntity()
+
+        # Add entity
+        realtime_game.add_entity(entity)
+        assert entity in realtime_game.entities
+
+        # Remove entity
+        realtime_game.remove_entity(entity)
+        assert entity not in realtime_game.entities
+
+        # Remove non-existent entity (should not raise)
+        realtime_game.remove_entity(entity)
+
+    def test_update_when_inactive(self, realtime_game):
+        """Test update when game is not active."""
+        # Should not raise exception
+        realtime_game.update(0.016)  # ~60 FPS
+
+    def test_update_with_entities(self, realtime_game):
+        """Test update with entities."""
+        class MockEntity:
+            def __init__(self):
+                self.updated = False
+                self.last_dt = 0
+
+            def update(self, dt):
+                self.updated = True
+                self.last_dt = dt
+
+        entity = MockEntity()
+        realtime_game.add_entity(entity)
+        realtime_game.game_state.current_state = GameState.PLAYING
+
+        dt = 0.016
+        realtime_game.update(dt)
+
+        assert entity.updated
+        assert entity.last_dt == dt * realtime_game.time_scale
+
+    def test_time_scale_effect(self, realtime_game):
+        """Test time scale effect on updates."""
+        class MockEntity:
+            def __init__(self):
+                self.last_dt = 0
+
+            def update(self, dt):
+                self.last_dt = dt
+
+        entity = MockEntity()
+        realtime_game.add_entity(entity)
+        realtime_game.game_state.current_state = GameState.PLAYING
+        realtime_game.time_scale = 2.0  # Double speed
+
+        dt = 0.016
+        realtime_game.update(dt)
+
+        assert entity.last_dt == dt * 2.0

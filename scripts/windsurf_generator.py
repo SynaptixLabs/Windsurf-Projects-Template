@@ -6,7 +6,7 @@ This is the main entry point for the Windsurf project template system.
 It orchestrates all other library modules to provide a clean, maintainable
 project generation workflow.
 
-Version: 5.3 (Corrected Execution Order)
+Version: 5.4 (FIXED: Cleanup Order & Re-enabled Cleanup)
 """
 
 import sys
@@ -72,7 +72,7 @@ class WindsurfGenerator:
             logger.warning(f"Could not set up file logging: {e}")
 
         logger.info("=" * 80)
-        logger.info("🚀 WINDSURF PROJECT GENERATOR v5.0 'ROBUSTUS'")
+        logger.info("🚀 WINDSURF PROJECT GENERATOR v5.4 'CLEANUP-FIXED'")
         logger.info(f"🕐 Session started: {datetime.datetime.now()}")
         logger.info("=" * 80)
         
@@ -86,9 +86,16 @@ class WindsurfGenerator:
         **kwargs
     ) -> bool:
         """
-        Main project generation workflow with the corrected order of operations.
+        Main project generation workflow with CORRECTED order of operations.
+        
+        FIXED ORDER:
+        1. Render templates (creates template directory)
+        2. Clean up artifacts (REMOVES template directory)  
+        3. Setup GitHub (commits CLEAN project)
+        4. Validate (confirms template directory is gone)
+        5. Generate TODOs
         """
-        self.logger.info("🚀 Starting Windsurf project generation v5.0 'Robustus'")
+        self.logger.info("🚀 Starting Windsurf project generation v5.4 'Cleanup-Fixed'")
         try:
             # Step 1: Establish target directory
             if project_dir:
@@ -117,11 +124,23 @@ class WindsurfGenerator:
                 return False
             self.logger.info("✅ PHASE END: Template rendering completed.")
 
-            # --- THE DEFINITIVE FIX: CORRECTED ORDER ---
+            # --- CRITICAL FIX: CLEANUP BEFORE GITHUB ---
 
-            # Step 4: Setup GitHub repository (BEFORE cleanup)
+            # Step 4: Clean up artifacts (BEFORE git setup)
+            self.logger.info("🧹 PHASE START: Cleaning up template artifacts...")
+            self.logger.info("🎯 CRITICAL: Removing template directory BEFORE git commit...")
+            
+            if not self.project_cleaner.cleanup_project(target_dir):
+                self.logger.error("❌ Cleanup failed! This will cause template artifacts to be committed.")
+                return False
+            else:
+                self.logger.info("✅ PHASE END: Cleanup completed successfully.")
+
+            # Step 5: Setup GitHub repository (AFTER cleanup)
             if project_config.get('create_github_repo', False):
                 self.logger.info("🐙 PHASE START: Setting up GitHub repository...")
+                self.logger.info("🎯 SAFE: Creating repository with CLEAN project (no template artifacts)")
+                
                 repo_url = self.github_manager.create_repository(
                     project_name=project_config['project_name'],
                     description=project_config['project_description'],
@@ -137,20 +156,13 @@ class WindsurfGenerator:
                     self.logger.warning("⚠️ PHASE END: GitHub repository setup failed.")
             else:
                 self.logger.debug("⏭️ GitHub repository creation skipped.")
-
-            # Step 5: Clean up artifacts (AFTER git setup)
-            self.logger.info("🧹 PHASE START: Cleaning up template artifacts...")
-            self.logger.info("✅ PHASE END: Temporarly Skipping Cleanup ")
             
-            # if not self.project_cleaner.cleanup_project(target_dir):
-              #   self.logger.warning("⚠️ Cleanup had issues, but continuing...")
-            # else:
-                # self.logger.info("✅ PHASE END: Cleanup completed.")
-            
-            # --- END OF FIX ---
+            # --- END OF CRITICAL FIX ---
 
-            # Step 6: Validate project structure
+            # Step 6: Validate project structure (confirms cleanup worked)
             self.logger.info("🔍 PHASE START: Validating project structure...")
+            self.logger.info("🎯 VERIFICATION: Ensuring template directory was removed...")
+            
             self._validate_project_with_report(target_dir)
             self.logger.info("✅ PHASE END: Project validation completed.")
 
@@ -191,7 +203,7 @@ class WindsurfGenerator:
         return {'template': template, 'template_info': available_templates[template], 'target_dir': target_dir, 'interactive': interactive, **project_data, **github_config, **kwargs}
 
     def _display_template_menu(self, templates: Dict[str, Any]) -> Optional[str]:
-        print("\n🎯 Windsurf Python Project Generator v5.0")
+        print("\n🎯 Windsurf Python Project Generator v5.4")
         print("=" * 50)
         template_list = list(templates.items())
         for i, (name, info) in enumerate(template_list, 1):
@@ -233,17 +245,42 @@ class WindsurfGenerator:
             self.logger.warning(f"TODO generation failed: {e}")
     
     def _validate_project_with_report(self, target_dir: Path) -> None:
+        """
+        Enhanced validation that specifically checks for template cleanup success.
+        """
         try:
             logs_dir = target_dir / "logs"
             logs_dir.mkdir(exist_ok=True)
-            if not self.project_validator.validate_project(target_dir):
-                 self.logger.warning("⚠️ Project validation found issues.")
             
+            # Specific check for template directory (should NOT exist)
+            template_dir = target_dir / "template"
+            if template_dir.exists():
+                self.logger.error(f"❌ CRITICAL: Template directory still exists at {template_dir}")
+                self.logger.error("❌ This indicates cleanup failed and template artifacts were committed!")
+                
+                # Try emergency cleanup
+                self.logger.warning("🚨 Attempting emergency cleanup...")
+                if self.project_cleaner.cleanup_project(target_dir):
+                    self.logger.info("✅ Emergency cleanup successful")
+                else:
+                    self.logger.error("❌ Emergency cleanup also failed")
+            else:
+                self.logger.info("✅ Template directory successfully removed")
+            
+            # Run full validation
+            validation_success = self.project_validator.validate_project(target_dir)
+            if not validation_success:
+                self.logger.warning("⚠️ Project validation found issues.")
+            else:
+                self.logger.info("✅ Project validation passed all checks")
+            
+            # Move validation report
             validation_report_src = target_dir / "validation_report.md"
             if validation_report_src.exists():
                 validation_report_dest = logs_dir / "validation_report.md"
                 validation_report_src.rename(validation_report_dest)
                 self.logger.info(f"📋 Validation report moved to: {validation_report_dest}")
+                
         except Exception as e:
             self.logger.warning(f"Validation failed: {e}")
 
@@ -268,7 +305,7 @@ Happy coding! 🚀
         self.logger.info("🎆 WINDSURF PROJECT GENERATOR SESSION COMPLETED")
 
 def main():
-    parser = argparse.ArgumentParser(description="Windsurf Python Project Generator v5.0")
+    parser = argparse.ArgumentParser(description="Windsurf Python Project Generator v5.4")
     parser.add_argument("--template", help="Template type to use")
     parser.add_argument("--non-interactive", action="store_true", help="Run with minimal prompts")
     parser.add_argument("--project-dir", type=Path, help="Target directory for project generation")

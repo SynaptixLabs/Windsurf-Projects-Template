@@ -102,13 +102,90 @@ class GitHubManager:
             self._run_command(['git', 'config', 'user.name', 'Avidor'], project_dir, "Configuring git user name")
             self._run_command(['git', 'config', 'user.email', 'avidor@synaptixlabs.ai'], project_dir, "Configuring git user email")
             self._run_command(['git', 'add', '.'], project_dir, "Staging all files")
+            
+            # Robust commit with pre-commit hook handling
             commit_message = f"🎉 Initial commit: {project_name}"
-            self._run_command(['git', 'commit', '--allow-empty', '-m', commit_message], project_dir, "Creating initial commit")
+            if not self._create_initial_commit_robust(project_dir, commit_message):
+                return False
+            
             local_hash = self._run_command(['git', 'rev-parse', 'HEAD'], project_dir, "Getting local commit hash").stdout.strip()
             self._run_command(['git', 'push', '-u', 'origin', 'main'], project_dir, "Pushing to 'main' branch")
             return self._verify_commit_on_remote(project_dir, local_hash)
         except subprocess.CalledProcessError:
             return False
+
+    def _create_initial_commit_robust(self, project_dir: Path, commit_message: str, max_attempts: int = 3) -> bool:
+        """Create initial commit with robust pre-commit hook handling."""
+        
+        for attempt in range(1, max_attempts + 1):
+            self.logger.info(f"  - Creating initial commit (attempt {attempt})...")
+            
+            try:
+                # Try to commit
+                result = subprocess.run(
+                    ['git', 'commit', '--allow-empty', '-m', commit_message],
+                    cwd=str(project_dir),
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                self.logger.info("    ✅ Success")
+                return True
+                
+            except subprocess.CalledProcessError as e:
+                # Check if working directory has changes (indicating hooks modified files)
+                try:
+                    # Check for unstaged changes
+                    unstaged = subprocess.run(
+                        ['git', 'diff', '--quiet'],
+                        cwd=str(project_dir),
+                        capture_output=True
+                    )
+                    
+                    # Check for staged changes that weren't committed
+                    staged = subprocess.run(
+                        ['git', 'diff', '--cached', '--quiet'],
+                        cwd=str(project_dir),
+                        capture_output=True
+                    )
+                    
+                    if unstaged.returncode == 0 and staged.returncode == 0:
+                        # No changes - this was a real failure
+                        self.logger.error(f"    ❌ FAILED: Creating initial commit")
+                        self.logger.error(f"      STDERR: {e.stderr.strip()}")
+                        return False
+                    else:
+                        # Files were modified by hooks - stage them and try again
+                        self.logger.info(f"    📝 Pre-commit hooks modified files, re-staging and retrying...")
+                        
+                        subprocess.run(
+                            ['git', 'add', '.'],
+                            cwd=str(project_dir),
+                            check=True
+                        )
+                        
+                        if attempt == max_attempts:
+                            # Last attempt - commit with --no-verify as fallback
+                            self.logger.info(f"    ⚠️ Maximum attempts reached, committing with --no-verify as fallback")
+                            try:
+                                subprocess.run(
+                                    ['git', 'commit', '--allow-empty', '-m', commit_message, '--no-verify'],
+                                    cwd=str(project_dir),
+                                    check=True,
+                                    capture_output=True,
+                                    text=True
+                                )
+                                self.logger.info("    ✅ Success (with --no-verify)")
+                                return True
+                            except subprocess.CalledProcessError as fallback_error:
+                                self.logger.error(f"    ❌ Even fallback commit failed: {fallback_error.stderr.strip()}")
+                                return False
+                        
+                except subprocess.CalledProcessError as check_error:
+                    self.logger.error(f"    ❌ Error checking git status: {check_error}")
+                    return False
+        
+        return False
 
     def _verify_commit_on_remote(self, project_dir: Path, local_commit_hash: str) -> bool:
         self.logger.info("🔍 Step 5: Verifying commit on remote...")

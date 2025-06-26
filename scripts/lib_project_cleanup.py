@@ -1,288 +1,336 @@
 #!/usr/bin/env python3
 """
-Project Cleanup Library
-
-Handles cleanup of template artifacts and post-generation cleaning.
-Extracted from external_project_cleanup.py and enhanced_windsurf_generator_v3.py.
+Enhanced Project Cleanup Library
+Removes template artifacts and development debris from generated projects.
+Ensures clean project state before git operations.
 """
 
 import shutil
 import logging
 from pathlib import Path
-from typing import List, Set, Optional, Dict
+from typing import List, Tuple, Dict
 import os
-import stat
+import glob
 
 
 class ProjectCleaner:
-    """Handles cleanup of template artifacts from generated projects."""
+    """Enhanced project cleaner with comprehensive artifact removal"""
     
     def __init__(self):
         self.logger = logging.getLogger('project_cleaner')
         
-        # Define cleanup patterns
-        self.artifact_patterns = [
-            '*.DISABLE*',
-            '*.jinja.bak*',
-            '*DELETE_ME*',
-            '*.template*',
+        # Directories to remove (template artifacts and dev debris)
+        self.artifact_directories = [
+            'template',           # Main template directory
+            'template_DELETE_ME', # Backup naming convention
+            'templates',          # Plural variant
+            '.template',          # Hidden template dirs
+            '__template__',       # Python-style naming
+            '__pycache__',        # Python cache
+            '.pytest_cache',      # Pytest cache
+            '.mypy_cache',        # MyPy cache
+            'node_modules',       # Node.js dependencies
+            '.venv',              # Virtual environment (if accidentally included)
+            'venv',               # Virtual environment
+            '.env',               # Environment directory
+            '.tox',               # Tox testing
+            'htmlcov',            # Coverage reports
+            '.coverage',          # Coverage data
+            'dist',               # Distribution files
+            'build',              # Build artifacts
+            '*.egg-info',         # Python package info
+        ]
+        
+        # Files to remove (template-related and temporary files)
+        self.artifact_files = [
+            'template.json',
+            'template.yaml', 
+            'template.yml',
+            '.template_config',
+            'generator_config.json',
+            'template_metadata.json',
+            '.env.local',
+            '.env.development',
+            '.env.test',
+            '*.tmp',
+            '*.temp',
+            '*.bak',
+            '*.orig',
+            '.DS_Store',          # macOS system files
+            'Thumbs.db',          # Windows system files
+            'desktop.ini',        # Windows system files
             'copier-answers.yml',
             '.copier-answers.yml'
         ]
         
-        # Directories to remove completely
-        self.artifact_directories = [
-            'template',
-            'template_DELETE_ME',
-            '__pycache__',
-            '.pytest_cache'
-        ]
-        
-        # Files to remove
-        self.artifact_files = [
-            '.copier-answers.yml',
-            'copier-answers.yml'
+        # Patterns that should never be in generated projects
+        self.forbidden_patterns = [
+            '**/template/**',
+            '**/templates/**',
+            '**/.template/**',
+            '**/generator_*',
+            '**/template_*',
+            '**/*.template',
+            '*.DISABLE*',
+            '*.jinja.bak*',
+            '*DELETE_ME*'
         ]
     
     def cleanup_project(self, project_dir: Path) -> bool:
         """
-        Clean up template artifacts from a generated project.
+        Enhanced cleanup with comprehensive logging and error handling
         
         Args:
             project_dir: Path to the generated project directory
             
         Returns:
-            True if cleanup was successful, False otherwise
+            bool: True if cleanup successful, False if errors occurred
         """
-        try:
-            self.logger.info(f"🧹 Starting cleanup of project directory: {project_dir}")
-            
-            cleaned_items = []
-            
-            # Step 1: Remove template artifacts directories
-            cleaned_items.extend(self._remove_artifact_directories(project_dir))
-            
-            # Step 2: Remove template artifact files
-            cleaned_items.extend(self._remove_artifact_files(project_dir))
-            
-            # Step 3: Remove files matching patterns
-            cleaned_items.extend(self._remove_pattern_files(project_dir))
-            
-            # Step 4: Clean up empty directories
-            cleaned_items.extend(self._remove_empty_directories(project_dir))
-            
-            # Step 5: Fix file permissions if needed
-            self._fix_file_permissions(project_dir)
-            
-            if cleaned_items:
-                self.logger.info(f"🧹 Cleaned up {len(cleaned_items)} items: {', '.join(cleaned_items[:10])}")
-                if len(cleaned_items) > 10:
-                    self.logger.info(f"   ... and {len(cleaned_items) - 10} more items")
-            else:
-                self.logger.info("✅ No template artifacts found to clean")
-            
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"❌ Cleanup failed: {e}")
+        success = True
+        cleanup_log = []
+        project_path = Path(project_dir)
+        
+        if not project_path.exists():
+            self.logger.error(f"Project directory does not exist: {project_dir}")
             return False
+        
+        self.logger.info(f"🧹 Starting cleanup of project: {project_dir}")
+        
+        # Phase 1: Clean artifact directories
+        success &= self._clean_directories(project_path, cleanup_log)
+        
+        # Phase 2: Clean artifact files
+        success &= self._clean_files(project_path, cleanup_log)
+        
+        # Phase 3: Clean by patterns (recursive)
+        success &= self._clean_by_patterns(project_path, cleanup_log)
+        
+        # Phase 4: Clean empty directories
+        success &= self._clean_empty_directories(project_path, cleanup_log)
+        
+        # Log cleanup summary
+        if cleanup_log:
+            self.logger.info("📋 Cleanup Summary:")
+            for log_entry in cleanup_log:
+                self.logger.info(f"  {log_entry}")
+        else:
+            self.logger.info("✨ No artifacts found - project was already clean")
+        
+        if success:
+            self.logger.info("✅ Project cleanup completed successfully")
+        else:
+            self.logger.warning("⚠️ Project cleanup completed with some errors")
+        
+        return success
     
-    def _remove_artifact_directories(self, project_dir: Path) -> List[str]:
-        """Remove artifact directories."""
-        cleaned = []
+    def _clean_directories(self, project_path: Path, cleanup_log: List[str]) -> bool:
+        """Clean artifact directories"""
+        success = True
         
         for dir_name in self.artifact_directories:
-            for artifact_dir in project_dir.rglob(dir_name):
-                if artifact_dir.is_dir():
-                    try:
-                        shutil.rmtree(artifact_dir)
-                        cleaned.append(f"{artifact_dir.relative_to(project_dir)}/")
-                        self.logger.debug(f"   🗑️ Removed directory: {artifact_dir.relative_to(project_dir)}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to remove directory {artifact_dir}: {e}")
+            if dir_name.startswith('*'):
+                # Handle glob patterns
+                pattern_paths = list(project_path.glob(dir_name))
+                for pattern_path in pattern_paths:
+                    if pattern_path.is_dir():
+                        success &= self._remove_directory(pattern_path, cleanup_log)
+            else:
+                # Handle direct directory names
+                dir_path = project_path / dir_name
+                if dir_path.exists() and dir_path.is_dir():
+                    success &= self._remove_directory(dir_path, cleanup_log)
         
-        return cleaned
+        return success
     
-    def _remove_artifact_files(self, project_dir: Path) -> List[str]:
-        """Remove specific artifact files."""
-        cleaned = []
+    def _clean_files(self, project_path: Path, cleanup_log: List[str]) -> bool:
+        """Clean artifact files"""
+        success = True
         
-        for file_name in self.artifact_files:
-            for artifact_file in project_dir.rglob(file_name):
-                if artifact_file.is_file():
-                    try:
-                        artifact_file.unlink()
-                        cleaned.append(str(artifact_file.relative_to(project_dir)))
-                        self.logger.debug(f"   🗑️ Removed file: {artifact_file.relative_to(project_dir)}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to remove file {artifact_file}: {e}")
+        for file_pattern in self.artifact_files:
+            if '*' in file_pattern:
+                # Handle glob patterns
+                pattern_paths = list(project_path.glob(file_pattern))
+                for pattern_path in pattern_paths:
+                    if pattern_path.is_file():
+                        success &= self._remove_file(pattern_path, cleanup_log)
+            else:
+                # Handle direct file names
+                file_path = project_path / file_pattern
+                if file_path.exists() and file_path.is_file():
+                    success &= self._remove_file(file_path, cleanup_log)
         
-        return cleaned
+        return success
     
-    def _remove_pattern_files(self, project_dir: Path) -> List[str]:
-        """Remove files matching artifact patterns."""
-        cleaned = []
+    def _clean_by_patterns(self, project_path: Path, cleanup_log: List[str]) -> bool:
+        """Clean using recursive patterns"""
+        success = True
         
-        for pattern in self.artifact_patterns:
-            for artifact_file in project_dir.rglob(pattern):
-                if artifact_file.is_file():
-                    try:
-                        artifact_file.unlink()
-                        cleaned.append(str(artifact_file.relative_to(project_dir)))
-                        self.logger.debug(f"   🗑️ Removed pattern file: {artifact_file.relative_to(project_dir)}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to remove pattern file {artifact_file}: {e}")
+        for pattern in self.forbidden_patterns:
+            try:
+                pattern_paths = list(project_path.glob(pattern))
+                for pattern_path in pattern_paths:
+                    if pattern_path.is_dir():
+                        success &= self._remove_directory(pattern_path, cleanup_log)
+                    elif pattern_path.is_file():
+                        success &= self._remove_file(pattern_path, cleanup_log)
+            except Exception as e:
+                self.logger.error(f"Error processing pattern {pattern}: {e}")
+                success = False
         
-        return cleaned
+        return success
     
-    def _remove_empty_directories(self, project_dir: Path) -> List[str]:
-        """Remove empty directories (except protected ones)."""
-        cleaned = []
-        protected_dirs = {'.git', 'logs', '__pycache__', '.pytest_cache'}
+    def _clean_empty_directories(self, project_path: Path, cleanup_log: List[str]) -> bool:
+        """Remove empty directories that may have been left behind"""
+        success = True
+        removed_dirs = []
         
-        # Walk directories bottom-up to handle nested empty directories
-        for dir_path in sorted(project_dir.rglob('*'), key=lambda p: len(p.parts), reverse=True):
-            if (dir_path.is_dir() and 
-                dir_path.name not in protected_dirs and
-                not any(dir_path.iterdir()) and  # Directory is empty
-                dir_path != project_dir):  # Don't remove the project root
-                
+        # Walk directory tree from bottom up to catch nested empty dirs
+        for root, dirs, files in os.walk(str(project_path), topdown=False):
+            for dir_name in dirs:
+                dir_path = Path(root) / dir_name
                 try:
-                    dir_path.rmdir()
-                    cleaned.append(f"{dir_path.relative_to(project_dir)}/")
-                    self.logger.debug(f"   🗑️ Removed empty directory: {dir_path.relative_to(project_dir)}")
+                    if dir_path.exists() and not any(dir_path.iterdir()):
+                        dir_path.rmdir()
+                        relative_path = dir_path.relative_to(project_path)
+                        removed_dirs.append(str(relative_path))
+                        cleanup_log.append(f"📁 Removed empty directory: {relative_path}")
+                except OSError:
+                    # Directory not empty or permission error - ignore
+                    pass
                 except Exception as e:
-                    self.logger.debug(f"Couldn't remove directory {dir_path}: {e}")
+                    self.logger.warning(f"Could not remove empty directory {dir_path}: {e}")
         
-        return cleaned
+        if removed_dirs:
+            self.logger.info(f"Removed {len(removed_dirs)} empty directories")
+        
+        return success
     
-    def _fix_file_permissions(self, project_dir: Path) -> None:
-        """Fix file permissions if needed (mainly for Unix systems)."""
+    def _remove_directory(self, dir_path: Path, cleanup_log: List[str]) -> bool:
+        """Safely remove a directory"""
         try:
-            for file_path in project_dir.rglob('*'):
-                if file_path.is_file():
-                    # Make sure files are readable
-                    current_permissions = file_path.stat().st_mode
-                    if not (current_permissions & stat.S_IRUSR):
-                        file_path.chmod(current_permissions | stat.S_IRUSR)
-                        self.logger.debug(f"   🔧 Fixed permissions: {file_path.relative_to(project_dir)}")
+            relative_path = dir_path.relative_to(dir_path.parent.parent) if len(dir_path.parts) > 1 else dir_path.name
+            shutil.rmtree(dir_path)
+            cleanup_log.append(f"📂 Removed directory: {relative_path}")
+            self.logger.debug(f"Removed directory: {relative_path}")
+            return True
+        except PermissionError as e:
+            cleanup_log.append(f"❌ Permission denied removing directory: {dir_path.name} - {e}")
+            self.logger.error(f"Permission denied removing directory {dir_path}: {e}")
+            return False
         except Exception as e:
-            self.logger.debug(f"Permission fix failed: {e}")
+            cleanup_log.append(f"❌ Failed to remove directory: {dir_path.name} - {e}")
+            self.logger.error(f"Failed to remove directory {dir_path}: {e}")
+            return False
+    
+    def _remove_file(self, file_path: Path, cleanup_log: List[str]) -> bool:
+        """Safely remove a file"""
+        try:
+            relative_path = file_path.relative_to(file_path.parent.parent) if len(file_path.parts) > 1 else file_path.name
+            file_path.unlink()
+            cleanup_log.append(f"📄 Removed file: {relative_path}")
+            self.logger.debug(f"Removed file: {relative_path}")
+            return True
+        except PermissionError as e:
+            cleanup_log.append(f"❌ Permission denied removing file: {file_path.name} - {e}")
+            self.logger.error(f"Permission denied removing file {file_path}: {e}")
+            return False
+        except Exception as e:
+            cleanup_log.append(f"❌ Failed to remove file: {file_path.name} - {e}")
+            self.logger.error(f"Failed to remove file {file_path}: {e}")
+            return False
     
     def get_cleanup_preview(self, project_dir: Path) -> Dict[str, List[str]]:
         """
-        Get a preview of what would be cleaned without actually cleaning.
+        Preview what would be cleaned without actually cleaning
         
-        Args:
-            project_dir: Path to the project directory
-            
         Returns:
-            Dictionary with categories of items that would be cleaned
+            dict: Dictionary with 'directories', 'files', 'patterns' keys
         """
+        project_path = Path(project_dir)
         preview = {
             'directories': [],
             'files': [],
-            'pattern_files': [],
-            'empty_directories': []
+            'patterns': []
         }
         
-        # Preview directories to remove
+        # Preview directories
         for dir_name in self.artifact_directories:
-            for artifact_dir in project_dir.rglob(dir_name):
-                if artifact_dir.is_dir():
-                    preview['directories'].append(str(artifact_dir.relative_to(project_dir)))
+            if dir_name.startswith('*'):
+                pattern_paths = list(project_path.glob(dir_name))
+                for pattern_path in pattern_paths:
+                    if pattern_path.is_dir():
+                        preview['directories'].append(str(pattern_path.relative_to(project_path)))
+            else:
+                dir_path = project_path / dir_name
+                if dir_path.exists() and dir_path.is_dir():
+                    preview['directories'].append(dir_name)
         
-        # Preview files to remove
-        for file_name in self.artifact_files:
-            for artifact_file in project_dir.rglob(file_name):
-                if artifact_file.is_file():
-                    preview['files'].append(str(artifact_file.relative_to(project_dir)))
+        # Preview files
+        for file_pattern in self.artifact_files:
+            if '*' in file_pattern:
+                pattern_paths = list(project_path.glob(file_pattern))
+                for pattern_path in pattern_paths:
+                    if pattern_path.is_file():
+                        preview['files'].append(str(pattern_path.relative_to(project_path)))
+            else:
+                file_path = project_path / file_pattern
+                if file_path.exists() and file_path.is_file():
+                    preview['files'].append(file_pattern)
         
-        # Preview pattern files
-        for pattern in self.artifact_patterns:
-            for artifact_file in project_dir.rglob(pattern):
-                if artifact_file.is_file():
-                    preview['pattern_files'].append(str(artifact_file.relative_to(project_dir)))
-        
-        # Preview empty directories
-        protected_dirs = {'.git', 'logs', '__pycache__', '.pytest_cache'}
-        for dir_path in project_dir.rglob('*'):
-            if (dir_path.is_dir() and 
-                dir_path.name not in protected_dirs and
-                not any(dir_path.iterdir()) and
-                dir_path != project_dir):
-                preview['empty_directories'].append(str(dir_path.relative_to(project_dir)))
+        # Preview patterns
+        for pattern in self.forbidden_patterns:
+            pattern_paths = list(project_path.glob(pattern))
+            for pattern_path in pattern_paths:
+                preview['patterns'].append(str(pattern_path.relative_to(project_path)))
         
         return preview
-    
-    def cleanup_logs_directory(self, project_dir: Path, keep_latest: int = 5) -> bool:
-        """
-        Clean up old log files, keeping only the most recent ones.
-        
-        Args:
-            project_dir: Project directory
-            keep_latest: Number of latest log files to keep
-            
-        Returns:
-            True if successful
-        """
-        try:
-            logs_dir = project_dir / 'logs'
-            if not logs_dir.exists():
-                return True
-            
-            # Get all log files sorted by modification time
-            log_files = [f for f in logs_dir.glob('*.log') if f.is_file()]
-            log_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-            
-            # Remove old log files
-            files_to_remove = log_files[keep_latest:]
-            removed_count = 0
-            
-            for log_file in files_to_remove:
-                try:
-                    log_file.unlink()
-                    removed_count += 1
-                    self.logger.debug(f"   🗑️ Removed old log: {log_file.name}")
-                except Exception as e:
-                    self.logger.warning(f"Failed to remove log file {log_file}: {e}")
-            
-            if removed_count > 0:
-                self.logger.info(f"🧹 Cleaned up {removed_count} old log files")
-            
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"❌ Log cleanup failed: {e}")
-            return False
 
 
-if __name__ == "__main__":
-    # Test functionality
+def main():
+    """Command line interface for project cleaner"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Project Cleanup Test")
-    parser.add_argument("project_dir", type=Path, help="Project directory to clean")
-    parser.add_argument("--preview", action="store_true", help="Preview cleanup without executing")
-    parser.add_argument("--logs-only", action="store_true", help="Clean only log files")
+    parser = argparse.ArgumentParser(description="Clean template artifacts from generated project")
+    parser.add_argument("project_dir", help="Path to project directory")
+    parser.add_argument("--preview", action="store_true", help="Preview what would be cleaned")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     
     args = parser.parse_args()
+    
+    # Setup logging
+    level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
     
     cleaner = ProjectCleaner()
     
     if args.preview:
-        preview = cleaner.get_cleanup_preview(args.project_dir)
+        preview = cleaner.get_cleanup_preview(Path(args.project_dir))
         print("🔍 Cleanup Preview:")
-        for category, items in preview.items():
-            if items:
-                print(f"   {category}: {len(items)} items")
-                for item in items[:5]:  # Show first 5 items
-                    print(f"     - {item}")
-                if len(items) > 5:
-                    print(f"     ... and {len(items) - 5} more")
-    elif args.logs_only:
-        success = cleaner.cleanup_logs_directory(args.project_dir)
-        print(f"{'✅' if success else '❌'} Log cleanup {'completed' if success else 'failed'}")
+        
+        if preview['directories']:
+            print("📂 Directories to remove:")
+            for item in preview['directories']:
+                print(f"  - {item}")
+        
+        if preview['files']:
+            print("📄 Files to remove:")
+            for item in preview['files']:
+                print(f"  - {item}")
+        
+        if preview['patterns']:
+            print("🎯 Pattern matches to remove:")
+            for item in preview['patterns']:
+                print(f"  - {item}")
+        
+        if not any(preview.values()):
+            print("✨ No artifacts found - project is clean")
     else:
-        success = cleaner.cleanup_project(args.project_dir)
-        print(f"{'✅' if success else '❌'} Project cleanup {'completed' if success else 'failed'}")
+        success = cleaner.cleanup_project(Path(args.project_dir))
+        exit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    main()

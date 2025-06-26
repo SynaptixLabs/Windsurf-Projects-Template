@@ -6,31 +6,7 @@ from unittest.mock import Mock, MagicMock
 
 # Import game components for testing
 from {{project_name.replace('-', '_')}}.config.game_settings import GameSettings
-from {{project_name.replace('-', '_')}}.core.constants import GameState, PlayerType, PieceType
-
-
-# === Pytest Configuration ===
-
-def pytest_configure(config):
-    """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "unit: Unit tests for individual components"
-    )
-    config.addinivalue_line(
-        "markers", "integration: Integration tests for system interactions"
-    )
-    config.addinivalue_line(
-        "markers", "visual: Visual regression tests for UI components"
-    )
-    config.addinivalue_line(
-        "markers", "performance: Performance and benchmarking tests"
-    )
-    config.addinivalue_line(
-        "markers", "ai: AI behavior and strategy tests"
-    )
-    config.addinivalue_line(
-        "markers", "gameplay: End-to-end gameplay scenario tests"
-    )
+from {{project_name.replace('-', '_')}}.core.constants import GameState, PlayerType
 
 
 # === Basic Fixtures ===
@@ -48,9 +24,6 @@ def test_settings() -> GameSettings:
         window_width=400,
         window_height=300,
         fps=30,
-        board_width=4,
-        board_height=4,
-        connect_length=3,
         debug_mode=True,
         show_fps=True,
     )
@@ -101,30 +74,11 @@ def mock_clock():
 # === Game State Fixtures ===
 
 @pytest.fixture
-def empty_board():
-    """Provide an empty game board for testing."""
-    return tuple(
-        tuple(PieceType.EMPTY for _ in range(7))
-        for _ in range(6)
-    )
-
-
-@pytest.fixture
-def test_board_4x4():
-    """Provide a small 4x4 board for testing."""
-    return tuple(
-        tuple(PieceType.EMPTY for _ in range(4))
-        for _ in range(4)
-    )
-
-
-@pytest.fixture
 def sample_game_state():
     """Provide a sample game state for testing."""
     return {
         "state": GameState.PLAYING,
         "current_player": PlayerType.HUMAN,
-        "board": empty_board(),
         "moves_made": 0,
         "game_result": None,
     }
@@ -144,16 +98,12 @@ def sample_game_data():
     return {
         "game_name": "Test Game",
         "timestamp": "2025-06-16T10:00:00",
-        "board_state": [
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 2, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0],
-        ],
         "current_player": 1,
-        "moves": ["3", "3", "3"],
+        "moves": [],
+        "settings": {
+            "difficulty": "medium",
+            "sound_enabled": True
+        }
     }
 
 
@@ -193,23 +143,26 @@ def performance_tracker():
 # === Test Data Generators ===
 
 @pytest.fixture
-def board_generator():
-    """Provide a utility to generate test board states."""
-    def generate_board(width: int = 7, height: int = 6, pieces: list = None):
-        """Generate a board with optional pre-placed pieces."""
-        board = [
-            [PieceType.EMPTY for _ in range(width)]
-            for _ in range(height)
-        ]
+def mock_game_data_generator():
+    """Provide a utility to generate test game data."""
+    def generate_game_data(seed: int = 42, **overrides):
+        """Generate consistent test game data."""
+        import random
+        random.seed(seed)
         
-        if pieces:
-            for row, col, piece_type in pieces:
-                if 0 <= row < height and 0 <= col < width:
-                    board[row][col] = piece_type
+        base_data = {
+            "player_count": random.randint(1, 4),
+            "difficulty": random.choice(["easy", "medium", "hard"]),
+            "score": random.randint(0, 1000),
+            "level": random.randint(1, 10),
+            "time_played": random.randint(60, 3600),  # 1 minute to 1 hour
+        }
         
-        return tuple(tuple(row) for row in board)
+        # Apply any overrides
+        base_data.update(overrides)
+        return base_data
     
-    return generate_board
+    return generate_game_data
 
 
 # === Cleanup Fixtures ===
@@ -238,22 +191,27 @@ def game_engine_mock():
 # === Parameterized Test Data ===
 
 @pytest.fixture(params=[
-    (7, 6, 4),  # Standard Connect Four
-    (6, 5, 4),  # Smaller variant
-    (8, 7, 4),  # Larger variant
-    (5, 4, 3),  # Mini variant
+    (800, 600),   # Standard HD
+    (1024, 768),  # XGA
+    (1920, 1080), # Full HD
+    (400, 300),   # Small test window
 ])
-def board_configurations(request):
-    """Provide different board configurations for parameterized tests."""
-    width, height, connect_length = request.param
+def window_sizes(request):
+    """Provide different window sizes for parameterized tests."""
+    width, height = request.param
     return {
         "width": width,
         "height": height,
-        "connect_length": connect_length,
     }
 
 
 @pytest.fixture(params=[PlayerType.HUMAN, PlayerType.AI])
 def player_types(request):
     """Provide different player types for parameterized tests."""
+    return request.param
+
+
+@pytest.fixture(params=[30, 60, 120])
+def fps_values(request):
+    """Provide different FPS values for testing."""
     return request.param

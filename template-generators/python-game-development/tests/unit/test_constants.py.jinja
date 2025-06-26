@@ -6,20 +6,20 @@ from {{project_name.replace('-', '_')}}.core.constants import (
     Colors,
     GameState,
     PlayerType,
-    PieceType,
     GameResult,
-    AILevel,
+    DifficultyLevel,
     AudioFiles,
     FontSizes,
     Layout,
-    DIRECTIONS,
+    InputKeys,
     ERROR_MESSAGES,
     DEFAULT_WINDOW_WIDTH,
     DEFAULT_WINDOW_HEIGHT,
-    DEFAULT_BOARD_COLS,
-    DEFAULT_BOARD_ROWS,
-    DEFAULT_CONNECT_LENGTH,
     DEFAULT_FPS,
+    ANIMATION_DURATION_MS,
+    INPUT_COOLDOWN_MS,
+    LOG_FORMAT,
+    LOG_DATE_FORMAT,
 )
 
 
@@ -30,10 +30,19 @@ class TestConstants:
         """Test that default dimensions are reasonable."""
         assert DEFAULT_WINDOW_WIDTH > 0
         assert DEFAULT_WINDOW_HEIGHT > 0
-        assert DEFAULT_BOARD_COLS >= 4
-        assert DEFAULT_BOARD_ROWS >= 4
-        assert DEFAULT_CONNECT_LENGTH >= 3
         assert DEFAULT_FPS > 0
+    
+    def test_timing_constants(self):
+        """Test that timing constants are positive."""
+        assert ANIMATION_DURATION_MS > 0
+        assert INPUT_COOLDOWN_MS > 0
+    
+    def test_log_format_strings(self):
+        """Test that log format strings are defined."""
+        assert isinstance(LOG_FORMAT, str)
+        assert len(LOG_FORMAT) > 0
+        assert isinstance(LOG_DATE_FORMAT, str)
+        assert len(LOG_DATE_FORMAT) > 0
     
     def test_colors_are_valid_rgb(self):
         """Test that all color constants are valid RGB tuples."""
@@ -44,14 +53,6 @@ class TestConstants:
             assert isinstance(color, tuple), f"Color {attr_name} is not a tuple"
             assert len(color) == 3, f"Color {attr_name} is not RGB (length != 3)"
             assert all(0 <= c <= 255 for c in color), f"Color {attr_name} has invalid RGB values"
-    
-    def test_directions_are_valid(self):
-        """Test that movement directions are valid."""
-        assert len(DIRECTIONS) == 4
-        for direction in DIRECTIONS:
-            assert isinstance(direction, tuple)
-            assert len(direction) == 2
-            assert all(isinstance(d, int) for d in direction)
 
 
 class TestEnums:
@@ -64,6 +65,7 @@ class TestEnums:
         assert GameState.PAUSED == "paused"
         assert GameState.GAME_OVER == "game_over"
         assert GameState.SETTINGS == "settings"
+        assert GameState.CREDITS == "credits"
         
         # Test all values are strings
         for state in GameState:
@@ -79,30 +81,28 @@ class TestEnums:
         for player_type in PlayerType:
             assert isinstance(player_type.value, str)
     
-    def test_piece_type_enum(self):
-        """Test PieceType enum values."""
-        assert PieceType.EMPTY == 0
-        assert PieceType.PLAYER_1 == 1
-        assert PieceType.PLAYER_2 == 2
-        
-        # Test all values are integers
-        for piece_type in PieceType:
-            assert isinstance(piece_type.value, int)
-    
     def test_game_result_enum(self):
         """Test GameResult enum values."""
-        assert GameResult.WIN_PLAYER_1 == "win_player_1"
-        assert GameResult.WIN_PLAYER_2 == "win_player_2"
+        assert GameResult.WIN == "win"
+        assert GameResult.LOSE == "lose"
         assert GameResult.DRAW == "draw"
         assert GameResult.ONGOING == "ongoing"
         assert GameResult.ABORTED == "aborted"
+        
+        # Test all values are strings
+        for result in GameResult:
+            assert isinstance(result.value, str)
     
-    def test_ai_level_enum(self):
-        """Test AILevel enum values."""
-        assert AILevel.EASY == "easy"
-        assert AILevel.MEDIUM == "medium"
-        assert AILevel.HARD == "hard"
-        assert AILevel.EXPERT == "expert"
+    def test_difficulty_level_enum(self):
+        """Test DifficultyLevel enum values."""
+        assert DifficultyLevel.EASY == "easy"
+        assert DifficultyLevel.MEDIUM == "medium"
+        assert DifficultyLevel.HARD == "hard"
+        assert DifficultyLevel.EXPERT == "expert"
+        
+        # Test all values are strings
+        for level in DifficultyLevel:
+            assert isinstance(level.value, str)
 
 
 class TestAudioFiles:
@@ -152,6 +152,19 @@ class TestLayout:
             assert value > 0, f"Layout value {attr_name} is not positive"
 
 
+class TestInputKeys:
+    """Test input key constants."""
+    
+    def test_input_keys_are_strings(self):
+        """Test that input key mappings are strings."""
+        input_attrs = [attr for attr in dir(InputKeys) if not attr.startswith('_')]
+        
+        for attr_name in input_attrs:
+            key = getattr(InputKeys, attr_name)
+            assert isinstance(key, str), f"Input key {attr_name} is not a string"
+            assert len(key) > 0, f"Input key {attr_name} is empty"
+
+
 class TestErrorMessages:
     """Test error message constants."""
     
@@ -167,10 +180,10 @@ class TestErrorMessages:
     
     def test_error_message_formatting(self):
         """Test that error messages support formatting."""
-        # Test messages with format placeholders
-        invalid_column_msg = ERROR_MESSAGES["invalid_column"]
-        assert "{column}" in invalid_column_msg
-        assert "{max_col}" in invalid_column_msg
+        # Test basic formatting
+        invalid_input_msg = ERROR_MESSAGES["invalid_input"]
+        assert "{input}" in invalid_input_msg
         
-        column_full_msg = ERROR_MESSAGES["column_full"] 
-        assert "{column}" in column_full_msg
+        # Test that messages can be formatted
+        formatted = invalid_input_msg.format(input="test_value")
+        assert "test_value" in formatted

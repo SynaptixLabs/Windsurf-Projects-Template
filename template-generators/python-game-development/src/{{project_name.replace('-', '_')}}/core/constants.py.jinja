@@ -57,6 +57,24 @@ class PlayerType(str, Enum):
     REMOTE = "remote"
 
 
+class PieceType(str, Enum):
+    """Enumeration of game piece types (generic for all games)."""
+    
+    # Generic pieces that can be used in various games
+    PLAYER_ONE = "player_one"
+    PLAYER_TWO = "player_two"
+    NEUTRAL = "neutral"
+    EMPTY = "empty"
+    
+    # Common game pieces (can be customized per game)
+    X = "x"
+    O = "o"
+    RED = "red"
+    BLUE = "blue"
+    BLACK = "black"
+    WHITE = "white"
+
+
 class GameResult(str, Enum):
     """Enumeration of game result types."""
     

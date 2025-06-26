@@ -42,7 +42,7 @@ class Renderer:
         # Initialize display for {{game_framework}}
         # TODO: Implement framework-specific initialization
         pass
-        {% endif -%}
+        {% endif %}
 
     def clear(self) -> None:
         """Clear the screen with the background color."""
@@ -53,7 +53,7 @@ class Renderer:
         # Clear screen for {{game_framework}}
         # TODO: Implement framework-specific screen clearing
         pass
-        {% endif -%}
+        {% endif %}
 
     def present(self) -> None:
         """Present the current frame (handled by game engine with display flip)."""
@@ -61,17 +61,7 @@ class Renderer:
         # to avoid double-flipping. The game engine calls the display flip function
         pass
 
-    {% if game_framework == 'pygame' -%}
-    def get_screen(self) -> Optional[pygame.Surface]:
-        """
-        Get the pygame screen surface.
-
-        Returns:
-            The pygame screen surface, or None if not initialized
-        """
-        return self.screen
-    {% else -%}
-    def get_screen(self) -> Optional[object]:
+    def get_screen(self) -> Optional[{% if game_framework == 'pygame' %}pygame.Surface{% else %}object{% endif %}]:
         """
         Get the game screen surface.
 
@@ -79,7 +69,6 @@ class Renderer:
             The screen surface, or None if not initialized
         """
         return self.screen
-    {% endif -%}
 
     def shutdown(self) -> None:
         """Clean shutdown of the renderer."""
@@ -89,4 +78,4 @@ class Renderer:
         # Clean shutdown for {{game_framework}}
         # TODO: Implement framework-specific cleanup
         pass
-        {% endif -%}
+        {% endif %}

@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any, Tuple
 
-from pydantic import BaseSettings, Field
-from pydantic_settings import SettingsConfigDict
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class GameSettings(BaseSettings):
@@ -23,23 +23,17 @@ class GameSettings(BaseSettings):
     fps: int = Field(default=60, description="Target frames per second")
     fullscreen: bool = Field(default=False, description="Start in fullscreen mode")
     
-    # === Board Configuration ===
-    board_width: int = Field(default=7, description="Number of columns")
-    board_height: int = Field(default=6, description="Number of rows")
-    connect_length: int = Field(default=4, description="Number of pieces needed to win")
-    
     # === Visual Configuration ===
-    board_color: Tuple[int, int, int] = (64, 128, 255)  # Blue
-    player1_color: Tuple[int, int, int] = (255, 64, 64)  # Red  
-    player2_color: Tuple[int, int, int] = (255, 255, 64)  # Yellow
     background_color: Tuple[int, int, int] = (32, 32, 32)  # Dark gray
-    grid_color: Tuple[int, int, int] = (128, 128, 128)  # Gray
+    primary_color: Tuple[int, int, int] = (64, 128, 255)  # Blue
+    secondary_color: Tuple[int, int, int] = (128, 128, 128)  # Gray
+    highlight_color: Tuple[int, int, int] = (255, 255, 255)  # White
     
     # === Audio Configuration ===
     enable_sound: bool = Field(default=True, description="Enable sound effects")
     enable_music: bool = Field(default=True, description="Enable background music")
     sound_volume: float = Field(default=0.7, ge=0.0, le=1.0, description="Sound effects volume")
-    music_volume: float = Field(default=0.5, ge=0.0, le=1.0, description="Sound effects volume")
+    music_volume: float = Field(default=0.5, ge=0.0, le=1.0, description="Background music volume")
     
     # === AI Configuration ===
     ai_enabled: bool = Field(default=True, description="Enable AI opponent")
@@ -55,11 +49,6 @@ class GameSettings(BaseSettings):
     def window_size(self) -> Tuple[int, int]:
         """Get window size as tuple."""
         return (self.window_width, self.window_height)
-    
-    @property
-    def board_size(self) -> Tuple[int, int]:
-        """Get board size as tuple."""
-        return (self.board_width, self.board_height)
 
 
 def load_game_settings() -> GameSettings:

@@ -17,19 +17,12 @@ class TestGameSettings:
         assert settings.window_width == 800
         assert settings.window_height == 600
         assert settings.fps == 60
-        assert settings.board_width == 7
-        assert settings.board_height == 6
-        assert settings.connect_length == 4
+        assert settings.fullscreen is False
     
     def test_window_size_property(self):
         """Test window_size property returns correct tuple."""
         settings = GameSettings(window_width=1024, window_height=768)
         assert settings.window_size == (1024, 768)
-    
-    def test_board_size_property(self):
-        """Test board_size property returns correct tuple.""" 
-        settings = GameSettings(board_width=8, board_height=7)
-        assert settings.board_size == (8, 7)
     
     def test_volume_validation(self):
         """Test that volume settings are validated."""
@@ -50,6 +43,48 @@ class TestGameSettings:
         settings = load_game_settings()
         assert isinstance(settings, GameSettings)
         assert settings.game_title == "{{project_description}}"
+    
+    def test_color_tuples(self):
+        """Test that color settings are proper RGB tuples."""
+        settings = GameSettings()
+        
+        # Check all colors are valid RGB tuples
+        assert len(settings.background_color) == 3
+        assert all(0 <= c <= 255 for c in settings.background_color)
+        
+        assert len(settings.primary_color) == 3
+        assert all(0 <= c <= 255 for c in settings.primary_color)
+        
+        assert len(settings.secondary_color) == 3
+        assert all(0 <= c <= 255 for c in settings.secondary_color)
+        
+        assert len(settings.highlight_color) == 3
+        assert all(0 <= c <= 255 for c in settings.highlight_color)
+    
+    def test_audio_settings(self):
+        """Test audio configuration settings."""
+        settings = GameSettings()
+        
+        assert isinstance(settings.enable_sound, bool)
+        assert isinstance(settings.enable_music, bool)
+        assert 0.0 <= settings.sound_volume <= 1.0
+        assert 0.0 <= settings.music_volume <= 1.0
+    
+    def test_ai_settings(self):
+        """Test AI configuration settings."""
+        settings = GameSettings()
+        
+        assert isinstance(settings.ai_enabled, bool)
+        assert settings.ai_difficulty in ["easy", "medium", "hard", "expert"]
+        assert settings.ai_think_time > 0
+    
+    def test_debug_settings(self):
+        """Test development/debug settings."""
+        settings = GameSettings()
+        
+        assert isinstance(settings.debug_mode, bool)
+        assert isinstance(settings.show_fps, bool)
+        assert settings.log_level in ["DEBUG", "INFO", "WARNING", "ERROR"]
 
 
 class TestSettingsIntegration:
@@ -63,16 +98,42 @@ class TestSettingsIntegration:
         assert settings1.fps == 30
         assert settings2.fps == 60
     
-    def test_color_tuples(self):
-        """Test that color settings are proper RGB tuples."""
-        settings = GameSettings()
+    def test_custom_configuration(self):
+        """Test creating settings with custom values."""
+        custom_settings = GameSettings(
+            window_width=1920,
+            window_height=1080,
+            fps=120,
+            fullscreen=True,
+            sound_volume=0.8,
+            music_volume=0.6,
+            ai_difficulty="hard",
+            debug_mode=True
+        )
         
-        # Check all colors are valid RGB tuples
-        assert len(settings.board_color) == 3
-        assert all(0 <= c <= 255 for c in settings.board_color)
+        assert custom_settings.window_size == (1920, 1080)
+        assert custom_settings.fps == 120
+        assert custom_settings.fullscreen is True
+        assert custom_settings.sound_volume == 0.8
+        assert custom_settings.music_volume == 0.6
+        assert custom_settings.ai_difficulty == "hard"
+        assert custom_settings.debug_mode is True
+    
+    def test_settings_validation_edge_cases(self):
+        """Test settings validation for edge cases."""
+        # Test minimum/maximum valid values
+        settings = GameSettings(
+            window_width=1,
+            window_height=1,
+            fps=1,
+            sound_volume=0.0,
+            music_volume=1.0,
+            ai_think_time=0.1
+        )
         
-        assert len(settings.player1_color) == 3
-        assert all(0 <= c <= 255 for c in settings.player1_color)
-        
-        assert len(settings.player2_color) == 3
-        assert all(0 <= c <= 255 for c in settings.player2_color)
+        assert settings.window_width == 1
+        assert settings.window_height == 1
+        assert settings.fps == 1
+        assert settings.sound_volume == 0.0
+        assert settings.music_volume == 1.0
+        assert settings.ai_think_time == 0.1
