@@ -1,4 +1,4 @@
-# Windsurf Projects Template Generator v5.0 "Robustus"
+# Windsurf Projects Template Generator v5.5 "Stable"
 
 Production-ready Python project template generator optimized for Windsurf IDE with state-of-the-art tooling and template inheritance.
 
@@ -28,26 +28,24 @@ Production-ready Python project template generator optimized for Windsurf IDE wi
 
 ### Generate a New Project
 
+#### Interactive Mode (Recommended)
+Run the generator from the template's root directory. It will guide you through the process.
 ```bash
-# Navigate to your projects directory
-cd C:\Synaptix-Labs\projects
-
-# Create and enter new project directory
-mkdir my-awesome-game
-cd my-awesome-game
-
-# Generate project (interactive)
-python C:\Synaptix-Labs\projects\Windsurf-Projects-Template\scripts\windsurf_generator.py python-game-development --interactive
+python scripts/windsurf_generator.py
 ```
 
-**That's it!** Your project will be generated with:
-- ✅ Complete Python package structure
-- ✅ Pygame game development setup
-- ✅ Testing infrastructure (pytest + Hypothesis)
-- ✅ Code quality tools (Ruff + MyPy + pre-commit)
-- ✅ GitHub repository (optional, with auto-commit)
-- ✅ Sprint-based TODO lists for development
-- ✅ Windsurf AI configuration
+#### Non-Interactive Mode (For Automation)
+Generate a project with default settings. This command creates a new `my-awesome-project` directory.
+```bash
+python scripts/windsurf_generator.py my-awesome-project --template python-modern --non-interactive
+```
+
+**That's it!** Your project is generated and all core dependencies are installed inside a `.venv` virtual environment. You get:
+- ✅ A complete Python package structure using `uv`.
+- ✅ Pre-configured testing with `pytest`.
+- ✅ Code quality tools (`Ruff`, `MyPy`, `pre-commit`).
+- ✅ An optional GitHub repository with an initial commit.
+- ✅ Sprint-based TODOs for guided development.
 
 ## 📁 Available Templates
 
@@ -105,7 +103,8 @@ python C:\Synaptix-Labs\projects\Windsurf-Projects-Template\scripts\windsurf_gen
 
 **Core Stack:**
 - **Python 3.12** - Latest stable Python
-- **Poetry** - Modern dependency management
+- **uv** - Ultra-fast Python package installer and virtual environment manager.
+- **Poetry** - Used for dependency definition in `pyproject.toml` and project management.
 - **Ruff** - Ultra-fast Python linter (replaces Flake8, Black, isort)
 - **MyPy** - Static type checking
 - **pytest + Hypothesis** - Testing framework with property-based testing
