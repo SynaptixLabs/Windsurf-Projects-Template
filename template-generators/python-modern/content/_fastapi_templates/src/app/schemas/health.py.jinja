@@ -1,0 +1,17 @@
+# --- Windsurf Metadata ---
+# Assistant: Cascade
+# Created: 2025-06-30
+# --- End Windsurf Metadata ---
+
+from pydantic import BaseModel
+from typing import Dict, Any
+
+class HealthResponse(BaseModel):
+    status: str
+    uptime: float
+
+class DetailedHealthResponse(BaseModel):
+    status: str
+    uptime: float
+    services: Dict[str, str]
+    system: Dict[str, Any]

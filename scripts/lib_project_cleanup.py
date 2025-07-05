@@ -21,7 +21,7 @@ class ProjectCleaner:
         
         # Directories to remove (template artifacts and dev debris)
         self.artifact_directories = [
-            'template',           # Main template directory
+
             'template_DELETE_ME', # Backup naming convention
             'templates',          # Plural variant
             '.template',          # Hidden template dirs

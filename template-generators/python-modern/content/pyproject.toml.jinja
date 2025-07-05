@@ -1,0 +1,52 @@
+[project]
+name = "{{ project_name | lower | replace(' ', '-') }}"
+version = "0.1.0"
+description = "{{ project_description }}"
+authors = [
+    { name = "{{ author_name }}", email = "{{ author_email }}" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">={{ python_version }}"
+dependencies = [
+    # Project dependencies will be added here by 'uv add'
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pre-commit>=3.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5",
+    "uv",
+]
+
+# This table is intentionally left sparse.
+# Poetry will read project metadata from the [project] table (PEP 621).
+# See: https://python-poetry.org/docs/pyproject/#poetry-and-pep-621
+[tool.poetry]
+package-mode = false
+
+[tool.ruff]
+# See: https://beta.ruff.rs/docs/configuration/
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

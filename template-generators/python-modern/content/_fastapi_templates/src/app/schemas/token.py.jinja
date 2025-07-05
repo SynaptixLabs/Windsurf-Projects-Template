@@ -1,0 +1,13 @@
+# --- Windsurf Metadata ---
+# Assistant: Cascade
+# Created: 2025-06-30
+# --- End Windsurf Metadata ---
+
+from pydantic import BaseModel
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: str | None = None

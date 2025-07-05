@@ -1,5 +1,5 @@
-# Copier Template Configuration for Python Projects (2025)
-# This file defines the template generation variables and logic
+# Modern Python Architecture Template Generator (2025)
+# FIXED: Simplified choices to prevent generation errors.
 
 _templates_suffix: .jinja
 _envops:
@@ -8,34 +8,34 @@ _envops:
   variable_start_string: "{{"
   variable_end_string: "}}"
 
-# Basic project information
+# Project Basics
 project_name:
   type: str
   help: "Project name (e.g., 'My Awesome Project')"
+  default: "{{ project_name }}"
   validator: "{% if not project_name %}Project name is required{% endif %}"
 
 project_slug:
   type: str
   help: "Project slug (lowercase, underscores/hyphens allowed)"
-  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') | regex_replace('^[0-9]', 'game_') }}"
-  validator: "{% if not project_slug.replace('-', '').replace('_', '').replace('game_', '').isalnum() %}Use only letters, numbers, hyphens, or underscores{% endif %}"
+  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') | regex_replace('^[0-9]', 'py_') }}"
+  validator: "{% if not project_slug.replace('-', '').replace('_', '').replace('py_', '').isalnum() %}Use only letters, numbers, hyphens, or underscores{% endif %}"
 
 project_description:
   type: str
   help: "Brief project description"
-  default: "A Python project built with modern 2025 tooling"
+  default: "Modern Python application with state-of-the-art 2025 tooling"
 
 author_name:
   type: str
   help: "Author name"
-  default: "Your Name"
+  default: "Avidor Rabinovich"
 
 author_email:
   type: str
   help: "Author email"
-  default: "your.email@example.com"
+  default: "avidor@synaptixlabs.ai"
 
-# Technical configuration
 python_version:
   type: str
   help: "Python version"
@@ -45,32 +45,92 @@ python_version:
     - "3.12"
     - "3.13"
 
-project_type:
+# --- FIXED PRESET SELECTION ---
+# Choices are now simple strings to avoid conversion errors.
+# The generator logic will need to parse these strings.
+complexity_preset:
   type: str
-  help: "What type of project are you building?"
-  default: "web-api"
+  help: "🎯 Choose your complexity level"
+  default: "Intermediate"
   choices:
-    - "web-api"
-    - "agentic-ai" 
-    - "data-science"
-    - "game-development"
-    - "cli-tool"
-    - "library"
+    - "Beginner"
+    - "Intermediate"
+    - "Expert"
+    - "Custom"
+    - "(Admin) Install ALL packages"
 
-package_manager:
+integration_focus:
   type: str
-  help: "Package manager preference"
-  default: "poetry"
+  help: "🎯 Primary focus area"
+  default: "ai_first"
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
   choices:
-    - "poetry"
-    - "uv"
+    - "ai_first"
+    - "web_api"
+    - "data_processing"
+    - "full_stack"
 
-# Database selections (multi-select)
-databases:
+
+# --- Template Source --- 
+_subdirectory: content
+
+# --- FRAMEWORK CATEGORIES (for custom selection) ---
+ai_frameworks:
   type: str
-  help: "Database backends to include (space-separated)"
+  help: "🤖 AI & Agentic Frameworks"
   multiselect: true
   default: []
+  when: "{{ complexity_preset == 'Custom' }}"
+  choices:
+    - "pydantic_ai"
+    - "crew_ai"
+    - "langchain"
+    - "instructor"
+    - "llama_index"
+
+web_frameworks:
+  type: str
+  help: "🌐 Web Frameworks"
+  multiselect: true
+  default: []
+  when: "{{ complexity_preset == 'Custom' }}"
+  choices:
+    - "fastapi"
+    - "litestar"
+    - "robyn"
+    - "streamlit"
+
+data_frameworks:
+  type: str
+  help: "📊 Data Processing"
+  multiselect: true
+  default: []
+  when: "{{ complexity_preset == 'Custom' }}"
+  choices:
+    - "polars"
+    - "duckdb"
+    - "pyarrow"
+    - "ibis"
+
+performance_tools:
+  type: str
+  help: "⚡ Performance & Tooling"
+  multiselect: true
+  default: []
+  when: "{{ complexity_preset == 'Custom' }}"
+  choices:
+    - "uv"
+    - "ruff"
+    - "orjson"
+    - "maturin"
+
+# Database selections
+databases:
+  type: str
+  help: "🗄️ Database backends"
+  multiselect: true
+  default: []
+  when: "{{ complexity_preset == 'Custom' }}"
   choices:
     - "postgresql"
     - "mongodb"
@@ -78,13 +138,64 @@ databases:
     - "sqlite"
     - "chromadb"
     - "pinecone"
-  when: "{{ project_type in ['web-api', 'agentic-ai', 'data-science'] }}"
 
-# Testing configuration
+# Container & Deployment
+include_docker:
+  type: bool
+  help: "🐳 Include Docker configuration?"
+  default: true
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
+
+include_github_actions:
+  type: bool
+  help: "🔄 Include GitHub Actions CI/CD?"
+  default: true
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
+
+# GitHub Repository Setup
+create_github_repo:
+  type: bool
+  help: "🐙 Create GitHub repository?"
+  default: true
+
+github_private:
+  type: bool
+  help: "Make repository private?"
+  default: true
+  when: "{{ False if complexity_preset == '(Admin) Install ALL packages' else create_github_repo }}"
+
+github_org:
+  type: str
+  help: "GitHub organization [SynaptixLabs]"
+  default: "SynaptixLabs"
+  when: "{{ False if complexity_preset == '(Admin) Install ALL packages' else create_github_repo }}"
+
+include_pre_commit:
+  type: bool
+  help: "🎣 Include pre-commit hooks?"
+  default: true
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
+
+# Documentation
+docs_framework:
+  type: str
+  help: "📚 Documentation framework"
+  default: "mkdocs"
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
+  choices:
+    - "mkdocs"
+    - "sphinx"
+    - "both"
+
+# Testing
+
+
+
 testing_framework:
   type: str
-  help: "Testing approach"
+  help: "🧪 Testing approach"
   default: "comprehensive"
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
   choices:
     - "basic"
     - "comprehensive"
@@ -92,122 +203,58 @@ testing_framework:
 
 coverage_threshold:
   type: int
-  help: "Minimum test coverage percentage"
+  help: "📊 Minimum test coverage percentage"
   default: 85
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
   validator: "{% if coverage_threshold < 0 or coverage_threshold > 100 %}Coverage must be between 0 and 100{% endif %}"
 
-# Advanced options
-include_docker:
+# Sprint Structure
+create_sprint_structure:
   type: bool
-  help: "Include Docker configuration?"
+  help: "📋 Create sprint TODO structure?"
   default: true
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
 
-include_github_actions:
-  type: bool
-  help: "Include GitHub Actions CI/CD?"
-  default: true
+sprint_count:
+  type: int
+  help: "📈 Number of sprints to create"
+  default: 4
+  when: "{{ False if complexity_preset == '(Admin) Install ALL packages' else create_sprint_structure }}"
+  validator: "{% if sprint_count < 1 or sprint_count > 10 %}Sprint count must be between 1 and 10{% endif %}"
 
-include_pre_commit:
-  type: bool
-  help: "Include pre-commit hooks?"
-  default: true
-
-include_docs:
-  type: bool
-  help: "Include documentation setup?"
-  default: true
-
-# Windsurf integration
+# Windsurf Integration
 include_windsurf:
   type: bool
-  help: "Include Windsurf IDE integration files?"
+  help: "🌊 Include Windsurf IDE integration?"
   default: true
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
 
-# CrewAI specific options (only shown for agentic-ai projects)
-crewai_features:
-  type: str
-  help: "CrewAI features to include (space-separated)"
-  multiselect: true
-  default: ["basic-agents", "tools"]
-  choices:
-    - "basic-agents"
-    - "flows"
-    - "tools"
-    - "memory"
-    - "human-in-loop"
-  when: "{{ project_type == 'agentic-ai' }}"
-
-# FastAPI specific options
-include_auth:
+# Advanced Features
+include_observability:
   type: bool
-  help: "Include authentication setup?"
+  help: "📊 Include observability stack (logging, metrics, tracing)?"
   default: false
-  when: "{{ project_type == 'web-api' }}"
+  when: "{{ False if complexity_preset == '(Admin) Install ALL packages' else (complexity_preset in ['Expert', 'Custom']) }}"
 
-api_version:
-  type: str
-  help: "API version prefix"
-  default: "v1"
-  when: "{{ project_type == 'web-api' }}"
-
-# Data Science specific options
-include_notebooks:
+include_security:
   type: bool
-  help: "Include Jupyter notebook setup?"
+  help: "🔒 Include security scanning and hardening?"
   default: true
-  when: "{{ project_type == 'data-science' }}"
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
 
-orchestration_tool:
+# Package Manager
+package_manager:
   type: str
-  help: "Workflow orchestration tool"
-  default: "prefect"
+  help: "📦 Package manager"
+  default: "uv"
+  when: "{{ complexity_preset != '(Admin) Install ALL packages' }}"
   choices:
-    - "prefect"
-    - "airflow"
-    - "none"
-  when: "{{ project_type == 'data-science' }}"
+    - "uv"
+    - "poetry"
+    - "pip"
 
-# Game development specific options
-game_type:
-  type: str
-  help: "Type of game"
-  default: "2d-arcade"
-  choices:
-    - "2d-arcade"
-    - "puzzle"
-    - "simulation"
-    - "educational"
-  when: "{{ project_type == 'game-development' }}"
-
-include_assets:
-  type: bool
-  help: "Include sample game assets?"
-  default: true
-  when: "{{ project_type == 'game-development' }}"
-
-# Template exclusions
+# Template Configuration
 _skip_if_exists:
   - "README.md"
   - ".env"
-  - "*.md"
-
-# Template migrations (for updates)
-_migrations:
-  - version: "1.0.0"
-    description: "Initial template"
-  - version: "1.1.0" 
-    description: "Added Ruff formatter, removed Black"
-  - version: "1.2.0"
-    description: "Added UV package manager option"
-
-# Post-generation tasks (DISABLED - handled by windsurf_generate.py)
-# _tasks:
-#   - task: "init_git"
-#     description: "Initialize git repository"
-#     when: true
-#   - task: "install_dependencies"
-#     description: "Install dependencies with {{ package_manager }}"
-#     when: true
-#   - task: "setup_pre_commit"
-#     description: "Setup pre-commit hooks"
-#     when: "{{ include_pre_commit }}"
+  - "*.log"

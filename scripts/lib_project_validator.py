@@ -51,7 +51,7 @@ class ProjectValidator:
             r'.*DELETE_ME.*'
         ]
     
-    def validate_project(self, project_dir: Path) -> bool:
+    def validate_project(self, project_dir: Path, project_config: Optional[Dict[str, Any]] = None) -> bool:
         """
         Validate the entire project structure.
         
@@ -82,7 +82,12 @@ class ProjectValidator:
             
             for check_name, check_func in checks:
                 try:
-                    success, details = check_func(project_dir)
+                    # Pass config to the git check only
+                    if check_name == "Git Repository":
+                        success, details = check_func(project_dir, project_config=project_config)
+                    else:
+                        success, details = check_func(project_dir)
+                        
                     validation_results.append((check_name, success, details))
                     
                     if success:
@@ -291,8 +296,12 @@ class ProjectValidator:
         
         return True, status_info
     
-    def _check_git_repository(self, project_dir: Path) -> Tuple[bool, str]:
+    def _check_git_repository(self, project_dir: Path, project_config: Optional[Dict[str, Any]] = None) -> Tuple[bool, str]:
         """Check Git repository status and configuration."""
+        # If config is provided and user opted out of repo creation, it's not an error.
+        if project_config and not project_config.get('create_github_repo', False):
+            return True, "Git repository creation was skipped by user choice."
+
         import subprocess
         
         issues = []

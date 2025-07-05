@@ -1,0 +1,45 @@
+"""Unit tests for Instructor utilities"""
+import pytest
+from unittest.mock import patch, MagicMock
+from src.{{project_slug}}.instructor_utils.client import get_client
+from src.{{project_slug}}.instructor_utils.models import User
+
+@patch('instructor.from_openai')
+def test_get_client_openai(mock_from_openai):
+    """Test that the OpenAI client is created correctly."""
+    client = get_client(provider="openai")
+    mock_from_openai.assert_called_once()
+    assert client is not None
+
+@patch('instructor.from_anthropic')
+def test_get_client_anthropic(mock_from_anthropic):
+    """Test that the Anthropic client is created correctly."""
+    client = get_client(provider="anthropic")
+    mock_from_anthropic.assert_called_once()
+    assert client is not None
+
+def test_get_client_invalid_provider():
+    """Test that an invalid provider raises a ValueError."""
+    with pytest.raises(ValueError):
+        get_client(provider="invalid_provider")
+
+@patch('src.{{project_slug}}.instructor_utils.client.get_client')
+def test_extract_user(mock_get_client):
+    """Test user extraction with a mocked client."""
+    # Arrange
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = User(
+        name="Test User", age=30, email="test@example.com"
+    )
+    mock_get_client.return_value = mock_client
+    
+    from src.{{project_slug}}.instructor_utils.examples import extract_user
+    
+    # Act
+    user = extract_user("Some text")
+    
+    # Assert
+    mock_get_client.assert_called_once()
+    mock_client.chat.completions.create.assert_called_once()
+    assert user.name == "Test User"
+    assert user.age == 30

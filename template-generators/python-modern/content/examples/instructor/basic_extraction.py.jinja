@@ -1,0 +1,17 @@
+"""Basic Instructor Extraction Example"""
+import os
+from dotenv import load_dotenv
+from rich.console import Console
+from src.{{project_slug}}.instructor_utils import extract_user
+
+load_dotenv()
+
+console = Console()
+
+if __name__ == "__main__":
+    if not os.getenv("OPENAI_API_KEY"):
+        console.print("[bold red]Error: OPENAI_API_KEY is not set.[/bold red]")
+    else:
+        text = "Jason is 40 years old and his email is jason@gmail.com"
+        user = extract_user(text)
+        console.print(user)

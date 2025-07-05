@@ -1,0 +1,45 @@
+# --- Windsurf Metadata ---
+# Assistant: Cascade
+# Created: 2025-06-30
+# --- End Windsurf Metadata ---
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from typing import Optional
+
+from {{project_slug}}.models.user import User
+from {{project_slug}}.schemas.user import UserCreate, UserUpdate
+from {{project_slug}}.security.hashing import Hasher
+
+class UserService:
+    def __init__(self, db_session: AsyncSession):
+        self.db_session = db_session
+
+    async def get_user(self, user_id: int) -> Optional[User]:
+        result = await self.db_session.execute(select(User).filter(User.id == user_id))
+        return result.scalars().first()
+
+    async def get_user_by_email(self, email: str) -> Optional[User]:
+        result = await self.db_session.execute(select(User).filter(User.email == email))
+        return result.scalars().first()
+
+    async def create_user(self, user_in: UserCreate) -> User:
+        hashed_password = Hasher.get_password_hash(user_in.password)
+        db_user = User(
+            email=user_in.email,
+            hashed_password=hashed_password,
+            full_name=user_in.full_name,
+            is_active=user_in.is_active
+        )
+        self.db_session.add(db_user)
+        await self.db_session.commit()
+        await self.db_session.refresh(db_user)
+        return db_user
+
+    async def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        user = await self.get_user_by_email(email)
+        if not user:
+            return None
+        if not Hasher.verify_password(password, user.hashed_password):
+            return None
+        return user

@@ -13,8 +13,16 @@ import sys
 import argparse
 import logging
 import datetime
+import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any
+
+# Add the script's parent directory to the Python path to allow direct execution.
+# This reverts the need for 'poetry run' by making the library modules findable.
+import sys
+from pathlib import Path
+script_dir = Path(__file__).resolve().parent
+sys.path.insert(0, str(script_dir))
 
 # Import our library modules
 from lib_template_renderer import TemplateRenderer
@@ -87,94 +95,85 @@ class WindsurfGenerator:
     ) -> bool:
         """
         Main project generation workflow with CORRECTED order of operations.
-        
-        FIXED ORDER:
-        1. Render templates (creates template directory)
-        2. Clean up artifacts (REMOVES template directory)  
-        3. Setup GitHub (commits CLEAN project)
-        4. Validate (confirms template directory is gone)
-        5. Generate TODOs
         """
         self.logger.info("🚀 Starting Windsurf project generation v5.4 'Cleanup-Fixed'")
+
+        # Step 0: Check for required system dependencies
+        self.logger.info("🔍 PHASE START: Verifying system dependencies...")
+        if not self.dependency_checker.check_all_dependencies():
+            self.logger.error("❌ Critical dependencies are missing. Please install them before proceeding.")
+            return False
+        self.logger.info("✅ PHASE END: System dependencies verified.")
+
         try:
-            # Step 1: Establish target directory
+            # Step 1: Establish target directory and get configuration
             if project_dir:
                 target_dir = Path(project_dir).resolve()
             else:
                 target_dir = Path.cwd().resolve()
-            
-            self.logger.info(f"📁 DEFINITIVE PROJECT PATH: {target_dir}")
             target_dir.mkdir(parents=True, exist_ok=True)
+            self.logger.info(f"📁 Project will be generated in: {target_dir}")
 
-            # Step 2: Get project configuration
-            self.logger.debug("🔍 Getting project configuration...")
-            project_config = self._get_project_configuration(template, interactive, target_dir, **kwargs)
-            if not project_config:
+            config = self._get_project_configuration(template, interactive, target_dir, **kwargs)
+            if not config:
+                self.logger.error("❌ Project configuration failed.")
                 return False
             
-            self.logger.info("📋 Project Configuration:")
-            for key, value in project_config.items():
-                if key != 'template_info':
-                    self.logger.info(f"   {key}: {value}")
-
-            # Step 3: Render templates
-            self.logger.info("📦 PHASE START: Rendering project templates...")
-            if not self.template_renderer.render_project(project_config):
+            # --- CORE WORKFLOW (Corrected Order) ---
+            # 1. Render the project template
+            self.logger.info("PHASE 1: Rendering project templates...")
+            final_answers = self.template_renderer.render_project(config)
+            if not final_answers:
                 self.logger.error("❌ Template rendering failed.")
                 return False
-            self.logger.info("✅ PHASE END: Template rendering completed.")
+            config.update(final_answers)
+            self.logger.info("✅ PHASE 1 COMPLETE.")
 
-            # --- CRITICAL FIX: CLEANUP BEFORE GITHUB ---
+            # 2. Run post-generation installer (uses .copier-answers.yml)
+            self.logger.info("PHASE 2: Running post-generation installer...")
+            installer_success = self._run_post_generation_installer(target_dir)
+            if not installer_success:
+                self.logger.error("❌ Post-generation installation failed. The project may be in an incomplete state.")
+                return False # Fail fast if installation fails
+            self.logger.info("✅ PHASE 2 COMPLETE.")
 
-            # Step 4: Clean up artifacts (BEFORE git setup)
-            self.logger.info("🧹 PHASE START: Cleaning up template artifacts...")
-            self.logger.info("🎯 CRITICAL: Removing template directory BEFORE git commit...")
-            
-            if not self.project_cleaner.cleanup_project(target_dir):
-                self.logger.error("❌ Cleanup failed! This will cause template artifacts to be committed.")
-                return False
-            else:
-                self.logger.info("✅ PHASE END: Cleanup completed successfully.")
+            # 3. Clean up artifacts (removes .copier-answers.yml)
+            self.logger.info("PHASE 3: Cleaning up temporary artifacts...")
+            self.project_cleaner.cleanup_project(target_dir)
+            self.logger.info("✅ PHASE 3 COMPLETE.")
 
-            # Step 5: Setup GitHub repository (AFTER cleanup)
-            if project_config.get('create_github_repo', False):
-                self.logger.info("🐙 PHASE START: Setting up GitHub repository...")
-                self.logger.info("🎯 SAFE: Creating repository with CLEAN project (no template artifacts)")
-                
+            # 4. Create GitHub repository if requested
+            self.logger.info("PHASE 4: Setting up GitHub repository...")
+            if config.get('create_github_repo'):
                 repo_url = self.github_manager.create_repository(
-                    project_name=project_config['project_name'],
-                    description=project_config['project_description'],
+                    project_name=config['project_name'],
+                    description=config['project_description'],
                     project_dir=target_dir,
-                    org=project_config.get('github_org', 'SynaptixLabs'),
-                    private=project_config.get('github_private', False),
+                    org=config.get('github_org', 'SynaptixLabs'),
+                    private=config.get('github_private', False),
                     auto_commit=True
                 )
                 if repo_url:
-                    project_config['github_url'] = repo_url
-                    self.logger.info(f"✅ PHASE END: GitHub repository setup completed: {repo_url}")
+                    config['github_url'] = repo_url
+                    self.logger.info(f"✅ GitHub repository setup completed: {repo_url}")
                 else:
-                    self.logger.warning("⚠️ PHASE END: GitHub repository setup failed.")
-            else:
-                self.logger.debug("⏭️ GitHub repository creation skipped.")
-            
-            # --- END OF CRITICAL FIX ---
+                    self.logger.warning("⚠️ Failed to create GitHub repository.")
+            self.logger.info("✅ PHASE 4 COMPLETE.")
 
-            # Step 6: Validate project structure (confirms cleanup worked)
-            self.logger.info("🔍 PHASE START: Validating project structure...")
-            self.logger.info("🎯 VERIFICATION: Ensuring template directory was removed...")
-            
-            self._validate_project_with_report(target_dir)
-            self.logger.info("✅ PHASE END: Project validation completed.")
+            # 5. Validate the final project state (verifies .copier-answers.yml is gone)
+            self.logger.info("PHASE 5: Validating final project state...")
+            self._validate_project_with_report(target_dir, config)
+            self.logger.info("✅ PHASE 5 COMPLETE.")
 
-            # Step 7: Generate TODO lists
-            self.logger.info("📋 PHASE START: Generating TODO lists...")
-            self._generate_todo_lists(target_dir, project_config)
-            self.logger.info("✅ PHASE END: TODO lists generated.")
+            # 6. Generate TODO lists
+            self.logger.info("PHASE 6: Generating TODO lists...")
+            self._generate_todo_lists(target_dir, config)
+            self.logger.info("✅ PHASE 6 COMPLETE.")
 
-            # Step 8: Final success summary
-            self._display_success_summary(project_config)
+            # --- FINAL SUMMARY ---
+            self._display_success_summary(config)
             return True
-            
+
         except Exception as e:
             self.logger.error(f"❌ Project generation failed with a critical error: {e}")
             import traceback
@@ -182,25 +181,49 @@ class WindsurfGenerator:
             return False
 
     def _get_project_configuration(self, template, interactive, target_dir, **kwargs) -> Optional[Dict[str, Any]]:
+        """
+        Gets project configuration. In interactive mode, this now fully delegates
+        to Copier by passing it no data. In non-interactive mode, it uses defaults.
+        The template can be provided via menu or command-line argument.
+        """
         available_templates = self.template_renderer.get_available_templates()
+        
         if template is None and interactive:
             template = self._display_template_menu(available_templates)
-        elif template is None:
-            self.logger.error("Template must be specified in non-interactive mode")
+        elif template is None: # Non-interactive mode
+            self.logger.error("Template must be specified in non-interactive mode via the --template argument.")
             return None
         
         if template not in available_templates:
-            self.logger.error(f"Template '{template}' not found")
+            self.logger.error(f"Template '{template}' not found.")
             return None
         
+        # REVERTED: Pre-fill project data to provide sensible defaults in interactive mode.
+        # This allows Copier to suggest defaults instead of forcing user input.
         if interactive:
-            project_data = self._get_interactive_project_data(target_dir)
-            github_config = self._get_github_preferences()
-        else:
             project_data = self._get_default_project_data(target_dir)
-            github_config = {'create_github_repo': True}
+            github_config = {}
+        else:
+            # Non-interactive mode requires pre-filled defaults.
+            project_data = self._get_default_project_data(target_dir)
+            # Add defaults for non-interactive mode to avoid prompts
+            project_data['complexity_preset'] = 'Intermediate'
+            project_data['integration_focus'] = 'ai_first'
+            github_config = {
+                'create_github_repo': True,
+                'github_private': True,
+                'github_org': 'SynaptixLabs'
+            }
 
-        return {'template': template, 'template_info': available_templates[template], 'target_dir': target_dir, 'interactive': interactive, **project_data, **github_config, **kwargs}
+        return {
+            'template': template, 
+            'template_info': available_templates[template], 
+            'target_dir': target_dir, 
+            'interactive': interactive, 
+            **project_data, 
+            **github_config, 
+            **kwargs
+        }
 
     def _display_template_menu(self, templates: Dict[str, Any]) -> Optional[str]:
         print("\n🎯 Windsurf Python Project Generator v5.4")
@@ -215,26 +238,9 @@ class WindsurfGenerator:
                     return template_list[choice - 1][0]
             except (ValueError, IndexError):
                 print("Invalid choice.")
-                
-    def _get_interactive_project_data(self, target_dir: Path) -> Dict[str, Any]:
-        print("\n📝 Project Information")
-        project_name = input(f"Project name [{target_dir.name}]: ").strip() or target_dir.name
-        project_description = input("Project description: ").strip() or f"A project named {project_name}"
-        author_name = input("Author name [Avidor]: ").strip() or "Avidor"
-        author_email = input("Author email [avidor@synaptixlabs.ai]: ").strip() or "avidor@synaptixlabs.ai"
-        return {'project_name': project_name, 'project_description': project_description, 'author_name': author_name, 'author_email': author_email, 'python_version': '3.12'}
-    
+
     def _get_default_project_data(self, target_dir: Path) -> Dict[str, Any]:
         return {'project_name': target_dir.name, 'project_description': f"A new project: {target_dir.name}", 'author_name': 'Avidor', 'author_email': 'avidor@synaptixlabs.ai', 'python_version': '3.12'}
-
-    def _get_github_preferences(self) -> Dict[str, Any]:
-        print("\n🐙 GitHub Repository Setup")
-        create_repo = input("Create GitHub repository? (Y/n): ").strip().lower() != 'n'
-        if not create_repo:
-            return {'create_github_repo': False}
-        private = input("Make repository private? (Y/n): ").strip().lower() != 'n'
-        org = input("GitHub organization [SynaptixLabs]: ").strip() or "SynaptixLabs"
-        return {'create_github_repo': True, 'github_private': private, 'github_org': org}
 
     def _generate_todo_lists(self, target_dir: Path, config: Dict[str, Any]) -> None:
         try:
@@ -244,74 +250,142 @@ class WindsurfGenerator:
         except Exception as e:
             self.logger.warning(f"TODO generation failed: {e}")
     
-    def _validate_project_with_report(self, target_dir: Path) -> None:
+    def _validate_project_with_report(self, target_dir: Path, config: Dict[str, Any]) -> None:
         """
         Enhanced validation that specifically checks for template cleanup success.
         """
         try:
             logs_dir = target_dir / "logs"
             logs_dir.mkdir(exist_ok=True)
-            
-            # Specific check for template directory (should NOT exist)
-            template_dir = target_dir / "template"
-            if template_dir.exists():
-                self.logger.error(f"❌ CRITICAL: Template directory still exists at {template_dir}")
+
+            # Specific check for copier answers file (should NOT exist after cleanup)
+            copier_answers_file = target_dir / ".copier-answers.yml"
+            if copier_answers_file.exists():
+                self.logger.error(f"❌ CRITICAL: Copier answers file still exists at {copier_answers_file}")
                 self.logger.error("❌ This indicates cleanup failed and template artifacts were committed!")
-                
-                # Try emergency cleanup
-                self.logger.warning("🚨 Attempting emergency cleanup...")
-                if self.project_cleaner.cleanup_project(target_dir):
-                    self.logger.info("✅ Emergency cleanup successful")
-                else:
-                    self.logger.error("❌ Emergency cleanup also failed")
             else:
-                self.logger.info("✅ Template directory successfully removed")
-            
+                self.logger.info("✅ Copier answers file successfully removed.")
+
             # Run full validation
-            validation_success = self.project_validator.validate_project(target_dir)
+            validation_success = self.project_validator.validate_project(target_dir, project_config=config)
             if not validation_success:
                 self.logger.warning("⚠️ Project validation found issues.")
             else:
-                self.logger.info("✅ Project validation passed all checks")
-            
+                self.logger.info("✅ Project validation passed all checks.")
+
             # Move validation report
             validation_report_src = target_dir / "validation_report.md"
             if validation_report_src.exists():
                 validation_report_dest = logs_dir / "validation_report.md"
                 validation_report_src.rename(validation_report_dest)
                 self.logger.info(f"📋 Validation report moved to: {validation_report_dest}")
-                
+
         except Exception as e:
             self.logger.warning(f"Validation failed: {e}")
 
+    def _run_post_generation_installer(self, target_dir: Path) -> bool:
+        """
+        Runs the framework installation script after project generation.
+        This is now called explicitly to avoid race conditions with copier tasks.
+        """
+        # The installer script is part of the python-modern template generator
+        installer_script_path = (
+            Path(__file__).parent.parent
+            / "template-generators"
+            / "python-modern"
+            / "scripts"
+            / "install_frameworks.py"
+        )
+
+        if not installer_script_path.exists():
+            self.logger.warning(f"Installer script not found at {installer_script_path}. Skipping installation.")
+            return False
+
+        # Use sys.executable to ensure we're using the same Python interpreter
+        command = [sys.executable, "-B", str(installer_script_path)]
+        
+        self.logger.info(f"Executing installer command: {' '.join(command)}")
+        self.logger.info(f"Working directory: {target_dir}")
+
+        try:
+            # Run the installer script with the project's root as the CWD.
+            # The installer script is designed to find the .copier-answers.yml in its CWD.
+            result = subprocess.run(
+                command,
+                cwd=target_dir,
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='ignore',  # Add this line to prevent UnicodeDecodeError
+                check=False  # We check the returncode manually to provide better logging
+            )
+
+            if result.returncode == 0:
+                self.logger.info("--- Installer Script Output ---")
+                self.logger.info(result.stdout)
+                self.logger.info("-----------------------------")
+                return True
+            else:
+                self.logger.error("❌ Post-generation installer script failed!")
+                self.logger.error(f"Return Code: {result.returncode}")
+                self.logger.error("--- Installer Script STDOUT ---")
+                self.logger.error(result.stdout)
+                self.logger.error("--- Installer Script STDERR ---")
+                self.logger.error(result.stderr)
+                self.logger.error("-----------------------------")
+                return False
+        except FileNotFoundError:
+            self.logger.error(f"❌ Installer script not found at path: {installer_script_path}")
+            return False
+        except Exception as e:
+            self.logger.error(f"❌ An unexpected error occurred while running the installer script: {e}")
+            import traceback
+            self.logger.debug(f"Full error traceback:\n{traceback.format_exc()}")
+            return False
+
     def _display_success_summary(self, config: Dict[str, Any]) -> None:
-        github_info = f"\n🐙 GitHub: {config['github_url']}" if config.get('github_url') else "\n🐙 GitHub: Not created."
+        github_info = f"\nGitHub: {config['github_url']}" if config.get('github_url') else "\nGitHub: Not created."
         summary = f"""
-🎉 Project '{config['project_name']}' Generated Successfully!
+[SUCCESS] Project '{config['project_name']}' Generated Successfully!
 
    Template: {config['template']}
    Location: {config['target_dir']}{github_info}
 
-🎯 Next Steps:
-   1. `cd {config['target_dir']}`
-   2. `poetry install`
-   3. `poetry run pre-commit install`
-   4. `poetry run test`
-   5. Start developing in the `src/` directory!
+Next Steps:
+   1. cd {config['target_dir']}
+   2. poetry install
+   3. poetry run pre-commit install
+   4. poetry run test
+   5. Start developing in the src/ directory!
 
-Happy coding! 🚀
+Happy coding!
 """
         print(summary)
-        self.logger.info("🎆 WINDSURF PROJECT GENERATOR SESSION COMPLETED")
+        self.logger.info("WINDSURF PROJECT GENERATOR SESSION COMPLETED")
 
 def main():
     parser = argparse.ArgumentParser(description="Windsurf Python Project Generator v5.4")
-    parser.add_argument("--template", help="Template type to use")
+    parser.add_argument(
+        "project_dir", 
+        nargs='?', 
+        default=None, 
+        type=Path, 
+        help="Target directory for project generation. Defaults to current directory."
+    )
+    parser.add_argument("--template", help="Template type to use (e.g., 'python-modern')")
     parser.add_argument("--non-interactive", action="store_true", help="Run with minimal prompts")
-    parser.add_argument("--project-dir", type=Path, help="Target directory for project generation")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Run in interactive mode (default). This flag is ignored.")
+    
     args = parser.parse_args()
     
     generator = WindsurfGenerator()
+
+    # --- DEPENDENCY CHECK ---
+    # Ensure all required dependencies are met before proceeding.
+    if not generator.dependency_checker.check_all_dependencies():
+        generator.logger.error("Dependency checks failed. Please install the required dependencies and try again.")
+        sys.exit(1)
+
     success = generator.generate_project(
         template=args.template,
         interactive=not args.non_interactive,

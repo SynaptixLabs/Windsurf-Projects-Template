@@ -1,0 +1,27 @@
+"""Instructor Content Moderation Example"""
+import os
+import instructor
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+from rich.console import Console
+
+load_dotenv()
+
+console = Console()
+
+class ModerationResult(BaseModel):
+    is_safe: bool = Field(description="True if the content is safe, False otherwise.")
+    reason: str = Field(description="A brief explanation for the moderation decision.")
+
+if __name__ == "__main__":
+    if not os.getenv("OPENAI_API_KEY"):
+        console.print("[bold red]Error: OPENAI_API_KEY is not set.[/bold red]")
+    else:
+        client = instructor.from_openai(instructor.openai.OpenAI())
+        text = "This is a perfectly safe and friendly message."
+        moderation = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            response_model=ModerationResult,
+            messages=[{"role": "user", "content": f"Moderate the following text: {text}"}],
+        )
+        console.print(moderation)

@@ -1,0 +1,39 @@
+# --- Windsurf Metadata ---
+# Assistant: Cascade
+# Created: 2025-06-30
+# --- End Windsurf Metadata ---
+
+# Getting Started with Your FastAPI Project
+
+This project was generated with a modern, production-ready FastAPI setup.
+
+## Project Structure
+
+- `src/{{project_slug}}/`
+  - `main.py`: The main application entry point.
+  - `core/`: Core application logic (config, database, logging).
+  - `api/`: API endpoints, organized by resource.
+  - `dependencies/`: FastAPI dependency injection functions.
+  - `schemas/`: Pydantic models for data validation.
+  - `security/`: Authentication and hashing logic.
+  - `models/`: SQLAlchemy database models.
+  - `services/`: Business logic for interacting with models.
+- `tests/`: Pytest tests for your application.
+
+## Running the Application
+
+1.  **Install dependencies:**
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+2.  **Set up your environment:**
+    Create a `.env` file in the root directory and configure your `DATABASE_URL` and `SECRET_KEY`.
+
+3.  **Run the development server:**
+    ```bash
+    uvicorn {{project_slug}}.main:app --reload
+    ```
+
+4.  **Access the API documentation:**
+    Navigate to [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) in your browser.

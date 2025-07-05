@@ -1,0 +1,147 @@
+# Ruff Configuration
+# Docs: https://docs.astral.sh/ruff/configuration/
+
+# Basic settings
+line-length = 88
+indent-width = 4
+target-version = "py{{python_version.replace('.', '')}}"
+
+# File discovery
+include = ["*.py", "*.pyi", "**/pyproject.toml", "*.ipynb"]
+extend-exclude = [
+    "__pycache__",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Linting rules
+[lint]
+# Enable rule categories
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+    "I",      # isort
+    "N",      # pep8-naming
+    "C90",    # mccabe complexity
+    "RUF",    # Ruff-specific rules
+    "S",      # flake8-bandit (security)
+    "T20",    # flake8-print
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RET",    # flake8-return
+    "TCH",    # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate (commented code)
+    "PL",     # Pylint
+    "TRY",    # tryceratops
+    "FLY",    # flynt (f-string formatting)
+    "PERF",   # Perflint
+    "FURB",   # refurb
+    "LOG",    # flake8-logging
+]
+
+# Disable specific rules
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "W191",   # Indentation contains tabs
+    "E111",   # Indentation is not a multiple of 4
+    "E114",   # Indentation is not a multiple of 4 (comment)
+    "E117",   # Over-indented
+    "D206",   # Docstring should be indented with spaces
+    "D300",   # Use triple double quotes
+    "Q000",   # Single quotes found but double quotes preferred
+    "Q001",   # Single quote multiline found but double quotes preferred
+    "Q002",   # Double quote multiline found but single quotes preferred
+    "Q003",   # Change outer quotes to avoid escaping inner quotes
+    "COM812", # Missing trailing comma (handled by formatter)
+    "COM819", # Prohibited trailing comma
+    "ISC001", # Implicitly concatenated string literals (handled by formatter)
+    "ISC002", # Implicitly concatenated string literals over continuation line
+]
+
+# Allow fix for all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Complexity settings
+[lint.mccabe]
+max-complexity = 10
+
+# Import sorting settings
+[lint.isort]
+force-single-line = false
+force-sort-within-sections = false
+known-first-party = ["{{project_slug}}"]
+known-third-party = []
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+# Pylint settings
+[lint.pylint]
+max-args = 8
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+# Error message format settings
+[lint.pycodestyle]
+max-doc-length = 88
+ignore-overlong-comment-entire-line = true
+
+# Docstring settings
+[lint.pydocstyle]
+convention = "google"
+
+# Per-file ignores
+[lint.per-file-ignores]
+"__init__.py" = ["F401", "F403", "F405"]  # Allow unused imports in __init__.py
+"tests/**/*.py" = [
+    "S101",   # Allow assert statements in tests
+    "PLR2004", # Allow magic values in tests
+    "S311",   # Allow random for tests
+    "S106",   # Allow hardcoded passwords in tests
+]
+"scripts/**/*.py" = [
+    "T20",    # Allow print statements in scripts
+    "S602",   # Allow subprocess calls in scripts
+]
+
+# Formatting settings
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+# Notebook-specific settings
+[format.preview]
+# Enable preview features
+enabled = true

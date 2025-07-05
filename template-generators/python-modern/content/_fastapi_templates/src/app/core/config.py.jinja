@@ -1,0 +1,31 @@
+# --- Windsurf Metadata ---
+# Assistant: Cascade
+# Created: 2025-06-30
+# --- End Windsurf Metadata ---
+
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "{{ project_name }}"
+    PROJECT_VERSION: str = "{{ version }}"
+    ENVIRONMENT: str = "development"
+
+    # API
+    API_V1_STR: str = "/api/v1"
+
+    # Database
+    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost/db"
+
+    # Security
+    SECRET_KEY: str = "a_very_secret_key"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ALGORITHM: str = "HS256"
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()

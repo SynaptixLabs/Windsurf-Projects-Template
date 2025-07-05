@@ -1,0 +1,13 @@
+"""Database data loader using connectorx"""
+
+import polars as pl
+from typing import Dict, Any
+
+from ..base import DataProcessor
+
+class DatabaseLoader(DataProcessor):
+    """Loads data from a database using a connection URI."""
+
+    def process(self, conn_uri: str, query: str, **kwargs) -> pl.DataFrame:
+        """Loads data from the database using the given query."""
+        return pl.read_database(query, conn_uri, **kwargs)
