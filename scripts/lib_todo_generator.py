@@ -22,7 +22,8 @@ class TODOGenerator:
             "agentic-ai": self._get_agentic_ai_todos(),
             "data-science": self._get_data_science_todos(),
             "web-api": self._get_web_api_todos(),
-            "custom-multi": self._get_custom_todos()
+            "custom-multi": self._get_custom_todos(),
+            "default": self._get_default_modern_todos()
         }
 
     def generate_todo_file(
@@ -55,7 +56,7 @@ class TODOGenerator:
                 output_dir = Path.cwd()
             
             output_dir.mkdir(parents=True, exist_ok=True)
-            output_path = output_dir / f"TODO.{project_name}.{sprint_number}.md"
+            output_path = output_dir / f"sprint.{project_name}.{sprint_number}.md"
             
             output_path.write_text(todo_content, encoding='utf-8')
             self.logger.debug(f"Generated TODO file: {output_path}")
@@ -66,6 +67,30 @@ class TODOGenerator:
             self.logger.error(f"Failed to generate TODO file: {e}")
             return None
 
+    def _get_default_modern_todos(self):
+        return {
+            "sprint_0": [
+                {
+                    "category": "Phase 1: Environment & Dependencies Setup",
+                    "tasks": [
+                        {"task": "Initialize development environment (Python & Poetry)", "priority": "high", "estimated_hours": 2,
+                         "description": "Set up Python {{python_version}} and install Poetry."},
+                        {"task": "Install project dependencies via Poetry", "priority": "high", "estimated_hours": 1},
+                        {"task": "Verify Poetry task aliases (lint, test, ci)", "priority": "medium", "estimated_hours": 1},
+                        {"task": "Configure pre-commit hooks and run on all files", "priority": "medium", "estimated_hours": 1}
+                    ]
+                },
+                {
+                    "category": "Phase 2: Quality Gates & Testing Infrastructure",
+                    "tasks": [
+                        {"task": "Run Ruff lint & format check", "priority": "medium", "estimated_hours": 1},
+                        {"task": "Run MyPy type checking", "priority": "medium", "estimated_hours": 1},
+                        {"task": "Run pytest with coverage >85%", "priority": "high", "estimated_hours": 2}
+                    ]
+                }
+            ]
+        }
+
     def generate_todo_list(
         self, 
         template_type: str, 
@@ -75,7 +100,7 @@ class TODOGenerator:
     ) -> str:
         """Generate a TODO list for a specific sprint."""
         
-        todos = self.todo_templates.get(template_type, {})
+        todos = self.todo_templates.get(template_type, self.todo_templates['default'])
         sprint_todos = todos.get(f"sprint_{sprint_number}", [])
         
         # Add custom requirements if provided
