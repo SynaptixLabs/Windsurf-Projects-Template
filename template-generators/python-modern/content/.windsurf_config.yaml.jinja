@@ -1,0 +1,46 @@
+# --- Windsurf Metadata ---
+# Assistant: Template_Maintainer
+# Created: 2025-07-08
+# Modified: 2025-07-08
+# --- End Windsurf Metadata ---
+
+# Windsurf Assistant-to-Scope Map
+# This starter configuration is generic enough for any modern-python project
+# and should be customised by the human developer after generation.
+
+assistants:
+  Architect:
+    description: Oversees overall architecture decisions
+    scope:
+      - pyproject.toml
+      - .github/
+      - Dockerfile*
+  Backend_Developer:
+    description: Implements application logic & APIs
+    scope:
+      - src/
+      - scripts/
+  Data_Scientist:
+    description: Prototypes data models & analytics
+    scope:
+      - notebooks/**
+      - data/
+  QA_Engineer:
+    description: Ensures test coverage & quality gates
+    scope:
+      - tests/
+      - pytest.ini
+      - .pre-commit*
+  DevOps_Specialist:
+    description: Handles CI/CD & deployment infra
+    scope:
+      - .github/
+      - Dockerfile*
+      - docker-compose.yml
+  Technical_Writer:
+    description: Maintains docs & onboarding material
+    scope:
+      - README.md
+      - docs/
+
+# Add more assistants or adjust paths as needed.
