@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# --- Windsurf Metadata ---
+# Assistant: Project_Generator
+# Created: 2025-07-07
+# Modified: 2025-07-07
+# --- End Windsurf Metadata ---
 """
 Windsurf Python Project Generator - Main Orchestrator
 
@@ -16,6 +21,8 @@ import datetime
 import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any
+import json
+from types import SimpleNamespace
 
 # Add the script's parent directory to the Python path to allow direct execution.
 # This reverts the need for 'poetry run' by making the library modules findable.
@@ -32,6 +39,11 @@ from lib_project_validator import ProjectValidator
 from lib_todo_generator import TODOGenerator
 from util_check_dependencies import DependencyChecker
 
+
+
+class GenerationError(Exception):
+    """Critical error during project generation"""
+    pass
 
 class WindsurfGenerator:
     """Main orchestrator for Windsurf project generation."""
@@ -91,6 +103,7 @@ class WindsurfGenerator:
         template: Optional[str] = None,
         interactive: bool = True,
         project_dir: Optional[Path] = None,
+        config_file: Optional[Path] = None,
         **kwargs
     ) -> bool:
         """
@@ -114,7 +127,7 @@ class WindsurfGenerator:
             target_dir.mkdir(parents=True, exist_ok=True)
             self.logger.info(f"📁 Project will be generated in: {target_dir}")
 
-            config = self._get_project_configuration(template, interactive, target_dir, **kwargs)
+            config = self._get_project_configuration(template, interactive, target_dir, config_file=config_file, **kwargs)
             if not config:
                 self.logger.error("❌ Project configuration failed.")
                 return False
@@ -133,8 +146,7 @@ class WindsurfGenerator:
             self.logger.info("PHASE 2: Running post-generation installer...")
             installer_success = self._run_post_generation_installer(target_dir)
             if not installer_success:
-                self.logger.error("❌ Post-generation installation failed. The project may be in an incomplete state.")
-                return False # Fail fast if installation fails
+                raise GenerationError("Post-generation installation failed. The project is incomplete; see logs above.")
             self.logger.info("✅ PHASE 2 COMPLETE.")
 
             # 3. Clean up artifacts (removes .copier-answers.yml)
@@ -157,7 +169,7 @@ class WindsurfGenerator:
                     config['github_url'] = repo_url
                     self.logger.info(f"✅ GitHub repository setup completed: {repo_url}")
                 else:
-                    self.logger.warning("⚠️ Failed to create GitHub repository.")
+                    raise GenerationError("GitHub repository creation failed. Aborting.")
             self.logger.info("✅ PHASE 4 COMPLETE.")
 
             # 5. Validate the final project state (verifies .copier-answers.yml is gone)
@@ -174,8 +186,11 @@ class WindsurfGenerator:
             self._display_success_summary(config)
             return True
 
+        except GenerationError as ge:
+            self.logger.error(f"❌ {ge}")
+            return False
         except Exception as e:
-            self.logger.error(f"❌ Project generation failed with a critical error: {e}")
+            self.logger.error(f"❌ Project generation failed with an unexpected error: {e}")
             import traceback
             self.logger.debug(f"Full error traceback:\n{traceback.format_exc()}")
             return False
@@ -187,6 +202,37 @@ class WindsurfGenerator:
         The template can be provided via menu or command-line argument.
         """
         available_templates = self.template_renderer.get_available_templates()
+        
+        # --- New: Load configuration from external YAML/JSON file if provided ---
+        config_file = kwargs.pop('config_file', None)
+        external_config: Dict[str, Any] = {}
+        if config_file:
+            try:
+                cfg_path = Path(config_file)
+                if not cfg_path.exists():
+                    self.logger.error(f"Configuration file '{cfg_path}' does not exist.")
+                    return None
+                if cfg_path.suffix.lower() in {'.yml', '.yaml'}:
+                    try:
+                        import yaml  # type: ignore
+                    except ImportError:
+                        self.logger.error("PyYAML is required to read YAML configuration files. Install it with 'pip install pyyaml'.")
+                        return None
+                    with cfg_path.open('r', encoding='utf-8') as f:
+                        external_config = yaml.safe_load(f) or {}
+                elif cfg_path.suffix.lower() == '.json':
+                    with cfg_path.open('r', encoding='utf-8') as f:
+                        external_config = json.load(f)
+                else:
+                    self.logger.error("Unsupported configuration file format. Use .yaml/.yml or .json")
+                    return None
+                # If template not provided via CLI, use value from config file
+                if template is None and 'template' in external_config:
+                    template = external_config['template']
+                self.logger.info(f"Loaded configuration from {cfg_path}")
+            except Exception as e:
+                self.logger.error(f"Failed to load configuration file: {e}")
+                return None
         
         if template is None and interactive:
             template = self._display_template_menu(available_templates)
@@ -215,15 +261,18 @@ class WindsurfGenerator:
                 'github_org': 'SynaptixLabs'
             }
 
-        return {
-            'template': template, 
-            'template_info': available_templates[template], 
-            'target_dir': target_dir, 
-            'interactive': interactive, 
-            **project_data, 
-            **github_config, 
-            **kwargs
+        # Merge configurations with correct precedence
+        base_config = {
+            'template': template,
+            'template_info': available_templates[template],
+            'target_dir': target_dir,
+            'interactive': interactive,
         }
+        base_config.update(project_data)
+        base_config.update(github_config)
+        base_config.update(external_config)  # external file overrides defaults
+        base_config.update(kwargs)  # CLI kwargs override file
+        return base_config
 
     def _display_template_menu(self, templates: Dict[str, Any]) -> Optional[str]:
         print("\n🎯 Windsurf Python Project Generator v5.4")
@@ -245,7 +294,7 @@ class WindsurfGenerator:
     def _generate_todo_lists(self, target_dir: Path, config: Dict[str, Any]) -> None:
         try:
             template_type = config['template'].replace('python-', '')
-            for sprint in range(1, 5):
+            for sprint in range(0, 5):
                 self.todo_generator.generate_todo_file(project_name=config['project_name'], template_type=template_type, sprint_number=sprint, output_dir=target_dir / 'docs')
         except Exception as e:
             self.logger.warning(f"TODO generation failed: {e}")
@@ -316,11 +365,14 @@ class WindsurfGenerator:
                 capture_output=True,
                 text=True,
                 encoding='utf-8',
-                errors='ignore',  # Add this line to prevent UnicodeDecodeError
-                check=False  # We check the returncode manually to provide better logging
+                errors='ignore',  
+                check=False  
             )
 
             if result.returncode == 0:
+                if "[WARN] No installer" in result.stdout:
+                    self.logger.warning("Installer completed but reported missing installers. Treating as failure.")
+                    return False
                 self.logger.info("--- Installer Script Output ---")
                 self.logger.info(result.stdout)
                 self.logger.info("-----------------------------")
@@ -374,6 +426,7 @@ def main():
     )
     parser.add_argument("--template", help="Template type to use (e.g., 'python-modern')")
     parser.add_argument("--non-interactive", action="store_true", help="Run with minimal prompts")
+    parser.add_argument("--config-file", type=Path, help="Path to YAML or JSON configuration file")
     parser.add_argument("-i", "--interactive", action="store_true", help="Run in interactive mode (default). This flag is ignored.")
     
     args = parser.parse_args()
@@ -389,7 +442,8 @@ def main():
     success = generator.generate_project(
         template=args.template,
         interactive=not args.non_interactive,
-        project_dir=args.project_dir
+        project_dir=args.project_dir,
+        config_file=args.config_file
     )
     sys.exit(0 if success else 1)
 

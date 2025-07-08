@@ -21,7 +21,28 @@ This project was generated with the [Windsurf Python Modern Template](https://gi
     poetry run pytest
     ```
 
-4.  **Start developing!**
+4.  **Run the application:**
+{% if integration_focus == 'web_api' %}
+    ```bash
+    poetry run uvicorn {{ project_slug }}.main:app --reload
+    ```
+{% elif integration_focus == 'ai_first' %}
+    ```bash
+    poetry run python src/{{ project_slug }}/app.py
+    ```
+{% elif integration_focus == 'data_processing' %}
+    ```bash
+    poetry run python src/{{ project_slug }}/pipeline.py
+    ```
+{% elif integration_focus == 'full_stack' %}
+    ```bash
+    poetry run uvicorn {{ project_slug }}.main:app --reload
+    ```
+{% else %}
+    *(Add your run command here)*
+{% endif %}
+
+5.  **Start developing!**
     - Your main application code is in `src/{{ project_slug }}/`.
 
 ## 🛠️ Development
