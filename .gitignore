@@ -1,4 +1,17 @@
+# Windsurf Project Template - .gitignore
+
+# ========================
+# Environment & Secrets
+# ========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ========================
 # Python
+# ========================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,74 +32,95 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Virtual environments
+.venv/
 venv/
-env/
 ENV/
-.venv
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/*.log
-*.log
-
-# Temporary files
-temp/
-tmp/
-*.tmp
-*.temp
-
-# Generated files
-validation_report.md
-requirements-generator.txt
-
-# Test outputs
+env/
 .pytest_cache/
 .coverage
 htmlcov/
+.mypy_cache/
+.ruff_cache/
 
-# Windsurf specific
-.windsurf/
+# ========================
+# Node.js / Frontend
+# ========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+dist/
+.next/
+out/
+.nuxt/
+.cache/
+.parcel-cache/
+.turbo/
 
-# === ENHANCED: Prevent temporary/debug files ===
-# Debug and fix scripts
-debug_*.py
-fix_*.py
-quick_*.py
-test_all_*.py
-test_phase_*.py
-test_autocommit*.py
-complete_*.py
-validate_*.py
+# ========================
+# IDEs & Editors
+# ========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
 
-# Temporary documentation
-*_FIX.md
-*_TEMP.md
+# ========================
+# OS Files
+# ========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
-# Cleanup scripts (except the main one)
-cleanup_*.py
+# ========================
+# Testing
+# ========================
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+test-results/
 
-# Backup files
-*.bak
-*.backup
-*_backup.*
+# ========================
+# Build & Deploy
+# ========================
+*.log
+logs/
+tmp/
+temp/
+.cache/
 
-# Generated project examples (keep only template references)
-space-invaders/
-4-in-a-row-game/
-example-generated-*/
+# ========================
+# Database
+# ========================
+*.db
+*.sqlite
+*.sqlite3
 
-# Log files from generator runs
-project_generator_*.log
-windsurf_generator_*.log
+# ========================
+# Windsurf Specific
+# ========================
+# Keep .windsurf/ if using Windsurf project settings
+# .windsurf/
+
+# ========================
+# Project Specific
+# ========================
+# Add project-specific ignores below
