@@ -35,3 +35,19 @@
 
 ### Decisions (sprint-local)
 - `{{SPRINT_ID}}_decisions_log.md`
+
+---
+
+## CTO Pre-Release Verification
+
+> **MANDATORY** before closing this sprint or merging to main.
+> See: `.windsurf/rules/role_cto.md` → "Pre-Release Verification" section
+
+| Verification | Status | CTO Sign-off |
+|--------------|--------|--------------|
+| Code integrity | ⬜ | |
+| Tests pass + coverage | ⬜ | |
+| Environment verified | ⬜ | |
+| Docs updated | ⬜ | |
+| Architecture compliance | ⬜ | |
+| Security review | ⬜ | |

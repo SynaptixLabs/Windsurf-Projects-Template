@@ -77,7 +77,51 @@ Escalate to `[FOUNDER]` (and notify CPO) before:
 - Introducing a new language/runtime to the backend/frontend
 - Adding a new datastore/queue/search engine
 - Making breaking API changes without a versioning/migration plan
-- Weakening test gates, observability, or security for “speed”
+- Weakening test gates, observability, or security for "speed"
 - Any change that affects multiple modules or external clients
 
 Use GOOD / BAD / UGLY + a clear recommendation.
+
+---
+
+## Pre-Release Verification (Trust-but-Verify)
+
+**MANDATORY** before merging to main or closing sprints. Quick verification checklist:
+
+### Code Integrity
+- [ ] Source extraction verified (no invented code in migration tasks)
+- [ ] No `TODO`/`FIXME` without linked issues
+- [ ] No hardcoded secrets or debug code
+
+### Testing
+- [ ] All tests pass: `pytest -q`
+- [ ] Coverage meets threshold (≥90% BE/SHARED/ML)
+- [ ] Regression tests added for bug fixes
+
+### Environment
+- [ ] Python version verified (3.11-3.13): `python --version`
+- [ ] Deps in manifests (no ad-hoc installs)
+
+### Documentation
+- [ ] README/AGENTS.md updated if behavior changed
+- [ ] `docs/03_MODULES.md` updated if capabilities changed
+
+### Architecture
+- [ ] No direct cross-module imports (only via `shared/`)
+- [ ] No new datastores without ADR
+- [ ] API contracts match architecture docs
+
+### Security
+- [ ] No credentials in code
+- [ ] Input validation on external inputs
+- [ ] `pip-audit` clean (no critical CVEs)
+
+### Quick Commands
+```bash
+python --version          # Verify 3.11-3.13
+pytest -q                 # Run tests
+pytest --cov             # Check coverage
+ruff check .             # Lint
+mypy .                   # Type check
+python scripts/audit_repo_structure.py  # Structure audit
+```

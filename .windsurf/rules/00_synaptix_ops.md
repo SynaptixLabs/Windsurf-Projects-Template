@@ -46,7 +46,27 @@ All projects should reuse the SynaptixLabs AGENTS framework (CLI/testing/mocks/a
 - Don’t build parallel orchestration, testing harnesses, or mock layers.
 - If something is missing: add a thin adapter + open an integration task.
 
-## When unclear: FLAG, don’t guess
+## Extraction vs Invention (CRITICAL)
+
+**Hard rule:** When tasked with migrating, extracting, or porting existing code:
+
+1. **NEVER invent code** — always extract from the identified source
+2. **Task 0 (mandatory):** Confirm source path + create file inventory + checkpoint with CTO
+3. **Task 1:** Copy only allowlisted files (no modifications)
+4. **Task 2:** Only then adapt/modify as needed
+
+**Extraction mode gates:**
+- [ ] Source path confirmed and accessible
+- [ ] File inventory created and reviewed
+- [ ] DR checkpoint created before any modifications
+- [ ] Only allowlisted files copied
+- [ ] Modifications tracked separately from copies
+
+If you cannot locate the source or the source is ambiguous: **STOP** and raise a FLAG. Do NOT proceed by inventing replacement code.
+
+---
+
+## When unclear: FLAG, don't guess
 If requirements conflict, are vague, or imply risky cross-cutting change:
 - raise a **FLAG** (GOOD/BAD/UGLY + recommendation)
 - escalate to `[CTO]` and/or `[FOUNDER]`

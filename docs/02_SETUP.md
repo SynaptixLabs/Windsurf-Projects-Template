@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}} — Setup Guide
 
-> **Development Environment Setup**  
+> **Development Environment Setup**
 > Owner: CTO
 
 ---
@@ -9,10 +9,31 @@
 
 | Tool | Version | Required |
 |------|---------|----------|
-| {{LANG_RUNTIME}} | {{VERSION}} | ✅ |
-| {{PACKAGE_MANAGER}} | {{VERSION}} | ✅ |
+| Python | >=3.11, <3.14 | ✅ |
+| Node.js | >=20.x | ✅ (if FE) |
+| pnpm | >=8.x | ✅ (if FE) |
 | Docker | Latest | Optional |
 | Git | Latest | ✅ |
+
+### ⚠️ Python Version Gate (CRITICAL)
+
+**Required:** Python 3.11, 3.12, or 3.13. Python 3.14+ is **NOT supported**.
+
+```bash
+# Verify your Python version BEFORE any work
+python --version
+# Must output: Python 3.11.x, 3.12.x, or 3.13.x
+
+# If using pyenv:
+pyenv install 3.12.4
+pyenv local 3.12.4
+
+# If using conda:
+conda create -n {{PROJECT_NAME}} python=3.12
+conda activate {{PROJECT_NAME}}
+```
+
+**Why this matters:** Python 3.14 has breaking changes that cause test noise and compatibility issues. The project will NOT work correctly on 3.14+.
 
 ---
 
