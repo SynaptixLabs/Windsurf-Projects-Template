@@ -1,30 +1,47 @@
-# /project:regression — Full Regression Gate
+# /project:regression — Pre-Merge Regression Gate
 
-Run before any merge or "done" declaration. Uses commands from CLAUDE.md.
+Run before any merge to main or "done" declaration.
 
 ## Steps
 
-1. Run full unit + integration + E2E test suite
-2. Check for regressions vs last known passing state
-3. Run E2E smoke on critical paths
-4. Static checks (TypeScript / mypy / ruff)
-5. Security scan for secrets
+1. **Confirm branch** — you're on the correct feature/sprint branch
+2. **Run full test suite** (same as /project:test)
+3. **Static checks:**
+   - TypeScript: `npm run type-check` (Node projects)
+   - Python types: `mypy .` (Python projects)
+   - Lint: `npm run lint` / `ruff check .`
+4. **Security scan:**
+   - `git grep -i "api_key\|secret\|password\|token" -- "*.ts" "*.py" "*.js" "*.tsx"`
+   - Confirm no `.env` files staged: `git status`
+5. **Check docs:** CLAUDE.md and module docs up to date if architecture changed
 
 ## Regression Gate Checklist
 
 ```
+### Code Quality
 [ ] All unit tests pass
 [ ] All integration tests pass
 [ ] E2E smoke on critical paths pass
-[ ] No type errors (npm run type-check / mypy)
-[ ] No lint errors
-[ ] No hardcoded secrets (git grep -i "api_key\|secret\|password")
-[ ] No .env files staged (git status check)
-[ ] Docs updated if architecture changed
-[ ] Avi sign-off
+[ ] TypeScript / Python type check: CLEAN
+[ ] Lint: CLEAN
+
+### Security
+[ ] No hardcoded secrets (API keys, passwords, tokens)
+[ ] No .env files staged for commit
+[ ] Input validation on new external inputs
+
+### Documentation
+[ ] CLAUDE.md updated if architecture or commands changed
+[ ] docs/03_MODULES.md updated if capabilities changed
+[ ] Module AGENTS.md updated if module behavior changed
+
+### Gate decision
+[ ] PASS — safe to merge
+[ ] FAIL — [list every item that failed with file + line]
 ```
 
 ## Output
 
-- **PASS**: print full ✅ checklist
-- **FAIL**: list every failing item with file + line — do not mark done
+State **PASS** or **FAIL** explicitly at the top.
+On FAIL: list every failing item with file + line number.
+On PASS: print the full checklist with ✅ marks.

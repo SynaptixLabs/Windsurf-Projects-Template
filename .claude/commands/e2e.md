@@ -1,46 +1,52 @@
-# /project:e2e — E2E Browser Testing with Playwright MCP
+# /project:e2e — E2E Browser Tests via Playwright MCP
 
-Run end-to-end browser tests using the Playwright MCP tool against the running dev server.
+Run end-to-end browser tests using the Playwright MCP tool.
+**Requires a running dev server.** Check CLAUDE.md for port and start command.
 
 ## Steps
 
-1. **Verify dev server is running** — check CLAUDE.md for port + start command.
-2. **If not running** → start it and wait for "ready" before proceeding.
-3. **Navigate to the app** using Playwright MCP.
-4. **Run critical user flows** from CLAUDE.md `Common Flows to Test` section.
-5. **Screenshot every significant state** → save to `tests/screenshots/e2e_[timestamp]/`
-6. **Report pass/fail per flow.**
+1. **Verify dev server is running** — check CLAUDE.md for the port
+2. **If not running** → start it and wait for the "ready" signal before continuing
+3. **Navigate to the app** using Playwright MCP
+4. **Run the user flows** listed in CLAUDE.md section "Common Flows to Test"
+5. **Screenshot every significant state** — save to `tests/screenshots/e2e_[timestamp]/`
+6. **Report results**
 
-## Playwright MCP Pattern
+## Playwright MCP usage pattern
 
 ```
-- playwright_navigate  → go to page
-- playwright_screenshot → after every major action (REQUIRED)
-- playwright_click, playwright_fill → for interactions
-- NEVER assume success — always screenshot to verify
+playwright_navigate → go to a URL
+playwright_screenshot → capture state after every major action
+playwright_click → interact with elements
+playwright_fill → fill form fields
+playwright_wait_for_selector → wait for elements to appear
 ```
 
-## Rules
+## Critical rules
 
-- Real running server required — no mocks for E2E
-- Every assertion must have a screenshot
-- On step failure → screenshot the failure state + stop + report
-- Test with realistic-looking data (not "test123")
+- Real server required — no mocks for E2E
+- Screenshot after EVERY assertion
+- If a step fails → screenshot the failure state + stop and report clearly
+- Use realistic test data (not "test123" or "aaa")
+- Test error states, not just happy paths
 
 ## Output format
 
 ```
 ## E2E Run — [PROJECT] — [DATE]
 
-Server: ✅ http://localhost:XXXX
+Server: ✅ Running on http://localhost:XXXX
 
 ### Flow: [Flow Name]
-Step 1: [action] → ✅ tests/screenshots/001_name.png
-Step 2: [action] → ❌ FAILED: [reason] → tests/screenshots/002_error.png
+Step 1: Navigate to /path → ✅ Screenshot: tests/screenshots/001_page.png
+Step 2: Fill registration form → ✅
+Step 3: Submit → ❌ FAILED: 500 error. Screenshot: tests/screenshots/003_error.png
 
 ### Summary
 Flows passed: X/Y
 Critical failures: [list]
 
-Gate: [ ] PASS | [ ] FAIL
+### Gate
+[ ] PASS — all critical flows verified
+[ ] FAIL — [list what failed]
 ```

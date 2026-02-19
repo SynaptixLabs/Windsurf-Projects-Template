@@ -1,46 +1,67 @@
-# /project:sprint-report — Generate Sprint Status Report
+# /project:sprint-report — Sprint Status Report Generator
 
-Produce a concise sprint status report. Read sprint docs from `docs/sprints/`.
+Generate a concise, accurate sprint status report for the current project.
 
 ## Steps
 
-1. Read the current sprint index (`docs/sprints/sprint_XX/sprint_XX_index.md`)
-2. Read all module todo + report files in the sprint folder
-3. Check test status from recent runs
+1. **Read** the current sprint index: `docs/sprints/sprint_XX/sprint_XX_index.md`
+2. **Read** all todo files: `docs/sprints/sprint_XX/todo/`
+3. **Read** any existing reports: `docs/sprints/sprint_XX/reports/`
+4. **Check** actual code state vs planned deliverables
+5. **Synthesize** into the report below
 
 ## Output Format
 
 ```
 ## Sprint [XX] Status Report — [PROJECT] — [DATE]
+**Branch:** [current branch]
+**Sprint goal:** [one-line goal from index]
+
+---
 
 ### ✅ Done (shipped + tested)
-- [item]
+- [item] — [brief note on how verified]
 
 ### 🔄 In Progress
-- [item] — [module] — ETA: [estimate]
+- [item] — [% complete estimate] — ETA: [estimate]
 
 ### ❌ Blocked
-- [item] — Blocked by: [reason] — Needs: [what]
+- [item] — Blocked by: [reason] — Needs: [what to unblock]
 
-### 🎯 Sprint Goal
-[one sentence — will we hit it?]
-Status: ON TRACK / AT RISK / MISSED
+### ⏭️ Deferred (moved to backlog)
+- [item] — Reason: [why deferred]
+
+---
+
+### 🎯 Sprint Goal Assessment
+**Will we hit the sprint goal?** YES / AT RISK / NO
+**Reason:** [1 sentence]
+
+---
 
 ### Quality Gates
-Tests passing: YES/NO
-Regressions: NONE / [list]
-Demo-ready: YES / NO — [what's missing]
+| Gate | Status |
+|------|--------|
+| Unit tests passing | ✅/❌ |
+| E2E smoke passing | ✅/❌ |
+| No regressions | ✅/❌ |
+| Type check clean | ✅/❌ |
+| Demo-ready | ✅/❌ |
 
-### CTO Pre-Release Verification
-[ ] Code integrity
-[ ] Tests pass + coverage
-[ ] Environment verified
-[ ] Docs updated
-[ ] Architecture compliance
-[ ] Security review
+---
 
 ### Next Actions (top 3)
-1. [action] — [role]
-2. [action] — [role]
-3. [action] — [role]
+1. [action] — Owner: [role] — Priority: P0/P1/P2
+2. [action] — Owner: [role] — Priority: P0/P1/P2
+3. [action] — Owner: [role] — Priority: P0/P1/P2
+
+---
+
+### Open Decisions Needed
+- [decision 1] — Owner: [FOUNDER/CTO/CPO]
 ```
+
+## After report
+
+If sprint is **complete**: run `/project:regression` then request Avi sign-off.
+If sprint is **at risk**: surface blockers to Avi immediately.

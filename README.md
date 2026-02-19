@@ -34,6 +34,9 @@ This "Sprint-0" work is **strategic** and best done outside the IDE with a plann
 | 8 | `.windsurf/rules/role_cpo.md` customized | ☐ |
 | 9 | `pyproject.toml` / `package.json` configured | ☐ |
 | 10 | Sprint-01 plan drafted | ☐ |
+| 11 | `CLAUDE.md` placeholders filled (Claude CLI context) | ☐ |
+| 12 | `.claude/settings.local.json` reviewed (add project-specific permissions) | ☐ |
+| 13 | `.claude/commands/` reviewed (all 6 commands work for this project) | ☐ |
 
 ---
 
@@ -240,6 +243,63 @@ git commit -m "Initial commit from Windsurf-Projects-Template"
 
 ---
 
+## Claude Code CLI Support
+
+This template is **dual-native**: it works with both Windsurf (IDE) and Claude Code CLI (terminal).
+
+### What's included
+
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Project context auto-loaded by Claude CLI on session start. Fill in `{{PLACEHOLDERS}}` during Sprint-0. |
+| `.claude/settings.local.json` | Pre-configured tool permissions (allow/deny). Add project-specific commands during Sprint-0. |
+| `.claude/commands/test.md` | `/project:test` — full test suite runner |
+| `.claude/commands/e2e.md` | `/project:e2e` — Playwright MCP browser tests |
+| `.claude/commands/plan.md` | `/project:plan` — force plan mode before complex work |
+| `.claude/commands/regression.md` | `/project:regression` — pre-merge quality gate |
+| `.claude/commands/release-gate.md` | `/project:release-gate` — pre-production checklist |
+| `.claude/commands/sprint-report.md` | `/project:sprint-report` — sprint status report |
+
+### Quick start (CLI)
+
+```bash
+# 1. Fill in CLAUDE.md placeholders
+# 2. Open project in Claude CLI
+cd your-project
+claude
+
+# 3. Use commands
+/project:plan    # Before any complex task
+/project:test    # Run test suite
+/project:e2e     # Browser tests
+```
+
+### Windsurf vs Claude CLI — when to use what
+
+| Task | Windsurf | Claude CLI |
+|------|----------|------------|
+| Complex multi-file edits | ✅ Best | ✅ Good |
+| Multi-agent parallel work | ❌ | ✅ Git worktrees |
+| Image drag-and-drop | ✅ | ❌ |
+| Custom slash commands | ❌ | ✅ `.claude/commands/` |
+| E2E testing via Playwright MCP | ❌ | ✅ |
+| Headless / CI integration | ❌ | ✅ |
+
+### Playwright MCP setup (CLI)
+
+```bash
+# Install globally (fast startup, no per-session download)
+npm install -g @playwright/mcp
+
+# Configure (user scope — applies to all projects)
+claude mcp add playwright --scope user -- node "C:\...\npm\node_modules\@playwright\mcp\cli.js"
+
+# Verify
+claude mcp list
+```
+
+---
+
 ## Windsurf Configuration
 
 ### Rule Levels
@@ -314,6 +374,15 @@ cp -r backend/modules/_example backend/modules/your_module
 Windsurf-Projects-Template/
 ├── _global/                    # Meta-rules (copy to Windsurf global)
 │   └── windsurf_global_rules.md
+├── .claude/                    # Claude Code CLI infrastructure
+│   ├── settings.local.json     # Permissions (allow/deny tool calls)
+│   └── commands/               # Custom slash commands
+│       ├── test.md             # /project:test
+│       ├── e2e.md              # /project:e2e
+│       ├── plan.md             # /project:plan
+│       ├── regression.md       # /project:regression
+│       ├── release-gate.md     # /project:release-gate
+│       └── sprint-report.md    # /project:sprint-report
 ├── .windsurf/rules/            # Workspace rules
 │   ├── 00_synaptix_ops.md      # Core operations + extraction gates
 │   ├── 01_artifact_paths.md    # File registry
