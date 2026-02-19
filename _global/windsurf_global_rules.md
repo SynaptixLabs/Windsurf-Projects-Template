@@ -177,3 +177,33 @@ Avoid wall-of-text. Prefer structured markdown.
 - Don’t claim you ran code unless you actually did.
 - Don’t assume unstated requirements.
 - Ask only when blocked; otherwise proceed with best-effort and document assumptions.
+
+---
+
+## 12) Dependency & configuration safety (non-negotiable)
+- **Dependencies:** do not add new third-party deps (or major upgrades) without explicit human approval.
+  - When proposing: name, version, why needed, alternatives, risk, rollback.
+- **Sensitive configs:** never overwrite or auto-edit:
+  - `.env*`, secrets files, credentials, CI/CD configs, build configs
+  - unless the human explicitly asks for it (and you show a patch first).
+- Prefer minimal, reversible changes; document assumptions.
+
+---
+
+## 13) Mocking policy (dev/test allowed, prod forbidden)
+- Mocks/stubs are allowed in:
+  - **tests**, and
+  - **local/dev** workflows (especially FE) **behind a clear switch** (flag/env/route).
+- **Never ship mocks to production paths**.
+- FE mock-first is encouraged to avoid BE blocking, but must remain contract-aligned (types/schema).
+
+---
+
+## 14) Scope discipline & cross-scope changes
+- Default: modify files only within the current working scope implied by:
+  - active path + nearest `AGENTS.md` + sprint todo.
+- Cross-scope edits are allowed **only** when:
+  - the repo’s ops/module-permissions rules explicitly allow it (e.g., sprint docs, module registry, decision logs), or
+  - the human explicitly approves.
+- If scope is unclear: raise a **FLAG** (GOOD/BAD/UGLY) with a recommended path.
+

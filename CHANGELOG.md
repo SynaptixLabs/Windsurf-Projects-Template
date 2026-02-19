@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-19
+
+### Added
+
+#### 🟢 Claude Code CLI Infrastructure (Dual-Native Support)
+- **`CLAUDE.md`**: Generic project context template with `{{PLACEHOLDERS}}` — auto-loaded by Claude Code CLI on session start. Covers identity, commands, testing gates, architecture non-negotiables, E2E flows, deployment, and role tags.
+- **`.claude/settings.local.json`**: Pre-configured permissions covering npm, poetry, git, docker-compose, pytest, uvicorn, playwright, and common shell commands. Deny-list for destructive operations (`git push --force`, `rm -rf`, `npm publish`).
+- **`.claude/commands/test.md`**: `/project:test` — structured full test suite runner with server-awareness.
+- **`.claude/commands/e2e.md`**: `/project:e2e` — Playwright MCP browser tests with screenshot-every-step requirement.
+- **`.claude/commands/plan.md`**: `/project:plan` — force plan mode before any task touching >2 files.
+- **`.claude/commands/regression.md`**: `/project:regression` — pre-merge gate with full quality checklist.
+- **`.claude/commands/release-gate.md`**: `/project:release-gate` — pre-production checklist (code, security, infra, docs, demo readiness).
+- **`.claude/commands/sprint-report.md`**: `/project:sprint-report` — sprint status report generator.
+
+#### 🟢 README: Claude CLI Section
+- New **"Claude Code CLI Support"** section documenting what's included, setup steps, Windsurf vs Claude CLI comparison table, and updated Sprint-0 checklist (items 11-13).
+
+### Changed
+
+#### 🟡 README: Sprint-0 checklist extended
+- Items 11-13 added for Claude CLI setup.
+
+#### 🟡 Template structure
+- `CLAUDE.md` and `.claude/` added to Template Structure diagram.
+
+---
+
 ## [0.3.0] - 2025-01-12
 
 ### Added

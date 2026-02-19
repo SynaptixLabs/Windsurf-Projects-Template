@@ -353,6 +353,53 @@ Windsurf-Projects-Template/
 
 ---
 
+## Claude Code CLI Support
+
+This template is **dual-native**: works with both **Windsurf** and **Claude Code CLI**.
+
+### What's included for Claude CLI
+
+| File/Dir | Purpose |
+|---|---|
+| `CLAUDE.md` | Project context auto-loaded by Claude Code on session start |
+| `.claude/settings.local.json` | Pre-configured permissions (npm, poetry, git, docker, pytest) |
+| `.claude/commands/test.md` | `/project:test` — full test suite runner |
+| `.claude/commands/e2e.md` | `/project:e2e` — Playwright MCP browser tests |
+| `.claude/commands/plan.md` | `/project:plan` — force plan mode for complex tasks |
+| `.claude/commands/regression.md` | `/project:regression` — pre-merge gate |
+| `.claude/commands/release-gate.md` | `/project:release-gate` — pre-prod checklist |
+| `.claude/commands/sprint-report.md` | `/project:sprint-report` — sprint status |
+
+### Setup for a new project (Claude CLI)
+
+1. **Copy `.claude/` directory** into your new project repo.
+2. **Replace `CLAUDE.md`** — fill in all `{{PLACEHOLDERS}}` (same workflow as README).
+3. **Start a CLI session**: `cd my-project && claude`
+4. **Verify**: type `/project:test` in the session.
+
+### Windsurf rules vs CLAUDE.md
+
+| | Windsurf | Claude CLI |
+|---|---|---|
+| **Context loading** | `.windsurf/rules/` (auto-applied) | `CLAUDE.md` (auto-loaded) |
+| **Role prompts** | `@role_cto`, `@role_cpo` | Role context embedded in `CLAUDE.md` |
+| **Slash commands** | Cascade commands | `.claude/commands/*.md` |
+| **Permissions** | Editor-level | `.claude/settings.local.json` |
+
+**Both tools read `AGENTS.md`.** They are complementary, not competing.
+
+### Sprint-0 additions (Claude CLI)
+
+Add to Sprint-0 checklist:
+
+| # | Artifact | Status |
+|---|----------|--------|
+| 11 | `CLAUDE.md` filled (all `{{PLACEHOLDERS}}` replaced) | ☐ |
+| 12 | `.claude/settings.local.json` reviewed | ☐ |
+| 13 | `/project:test` runs cleanly in CLI session | ☐ |
+
+---
+
 ## Troubleshooting
 
 ### "I don't know what structure to use"
