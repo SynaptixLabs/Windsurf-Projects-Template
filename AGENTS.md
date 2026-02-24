@@ -25,7 +25,7 @@ Every message starts with **one** of these:
 * `[CTO]`
 * `[DEV:<module>]` (module conversation; examples: `[DEV:auth]`, `[DEV:payments|BE]`, `[DEV:ui-shell|FE]`)
 * `[FOUNDER]` (human operator / facilitator)
-* `[DESIGNER]` (external)
+* `[DESIGNER]` / `[UX]` (ARIA -- invoke via `@role_ux` or Claude Project with `role_ux.md`)
 * `[REVIEW]` (cross-role review mode; still state which role you’re reviewing as)
 
 If unsure: default to `[CTO]` and proceed with best effort, documenting assumptions.
@@ -128,15 +128,19 @@ These are **system roles** reused across projects. They are **generic** (not pro
 
 ---
 
-### 2.5 DESIGNER (External, optional)
+### 2.5 DESIGNER / ARIA (UI/UX Creative Agent)
 
-Often outside Windsurf (Figma, Storybook, etc.).
+Invoked via `@role_ux` in Windsurf, or as a Claude Project with `role_ux.md` as system prompt.
 
-**Owns:** UI kit, design tokens, component specs (not implementation).
+**Owns:** UI kit, design tokens, component specs, SVG/animation systems, Living UI Kits.
 
 **Hard prerequisite (when FE exists):**
 
 * `docs/ui/UI_KIT.md` must exist before serious FE work begins.
+
+**ARIA modes:** Reactive (spec → implement precisely + elevate) | Generative (brief → invent + build).
+Output is always runnable code — never prose descriptions.
+See `.windsurf/rules/role_ux.md` for full instructions.
 
 ---
 

@@ -1,7 +1,6 @@
 # {{PROJECT_NAME}} — Deployment
 
-> **Deployment Process & Infrastructure**  
-> Owner: CTO
+> Owner: `[CTO]`
 
 ---
 
@@ -9,9 +8,9 @@
 
 | Environment | URL | Branch | Auto-Deploy |
 |-------------|-----|--------|-------------|
-| Development | `dev.{{domain}}` | `dev` | ✅ |
-| Staging | `staging.{{domain}}` | `dev` (tagged) | ❌ |
-| Production | `{{domain}}` | `main` | ❌ |
+| Development | `http://localhost:{{DEV_PORT}}` | any | ✅ (local only) |
+| Staging | `https://staging.{{domain}}` | `dev` (tagged) | ✅ on merge |
+| Production | `https://{{domain}}` | `main` | ❌ manual |
 
 ---
 
@@ -20,74 +19,97 @@
 ```
 Feature Branch → dev → Staging → Production
        │          │        │          │
-       │          │        │          └── Manual (CTO approval)
-       │          │        └── Manual (QA sign-off)
-       │          └── Auto on PR merge
-       └── PR required
+       │          │        │          └── Manual gate (CTO + FOUNDER)
+       │          │        └── Auto on PR merge to dev
+       │          └── Auto deploy after PR merge
+       └── PR required; no direct pushes to dev/main
 ```
+
+---
+
+## Environment & Secrets Management
+
+### Per-environment secrets
+
+| Environment | Secrets location |
+|-------------|-----------------|
+| Development | `.env` (local, gitignored) |
+| Staging | CI/CD vault → Railway / GitHub Secrets / Vercel env |
+| Production | CI/CD vault → same platform, separate values |
+
+### Env promotion rule
+
+**Never copy `.env` values between environments.** Each environment must have independently configured secrets.
+
+```bash
+# On staging/prod deployment: always source from vault
+# Never:
+cp .env .env.staging   # ❌ WRONG
+
+# Correct: set vars in CI platform UI or via CLI
+railway variables set SECRET_KEY=<vault_value> --environment staging
+```
+
+### Environment variable checklist (before deploy to staging/prod)
+
+- [ ] `APP_ENV` set to correct tier (`staging` | `production`)
+- [ ] `DEBUG=false`
+- [ ] `SECRET_KEY` is a new value (not dev key)
+- [ ] `DATABASE_URL` points to correct tier DB
+- [ ] `PUBLIC_URL` is the correct public URL
+- [ ] `ALLOWED_ORIGINS` matches the actual frontend domain
+- [ ] All `_KEY` variables rotated from previous tier
+- [ ] `SENTRY_DSN` configured and `SENTRY_ENVIRONMENT` set correctly
+- [ ] Feature flags reviewed — no experimental flags enabled in prod
 
 ---
 
 ## Pre-Deployment Checklist
 
-### All Environments
-- [ ] All tests passing
+### All environments
+- [ ] All tests passing (unit + integration)
 - [ ] Coverage target met
-- [ ] Linting passes
-- [ ] No security vulnerabilities
+- [ ] Linting clean
+- [ ] No known security vulnerabilities
 
 ### Staging
 - [ ] All above +
 - [ ] E2E tests pass
-- [ ] Manual QA completed
+- [ ] Manual smoke test completed
 - [ ] Performance acceptable
 
 ### Production
 - [ ] All above +
 - [ ] Rollback plan documented
-- [ ] Monitoring configured
-- [ ] CTO approval
+- [ ] Monitoring + alerting configured
+- [ ] `[CTO]` approval
+- [ ] `/project:release-gate` passed
 
 ---
 
 ## Deploy Commands
 
-### Development
 ```bash
-# Auto-deployed on merge to dev
-git push origin dev
-```
-
-### Staging
-```bash
-# Tag and deploy
+# Staging (auto on merge, or manual tag)
 git tag -a staging-$(date +%Y%m%d) -m "Staging deploy"
 git push origin --tags
 {{STAGING_DEPLOY_COMMAND}}
-```
 
-### Production
-```bash
-#### Merge to main and deploy
-git checkout main
-git merge dev
+# Production
+git checkout main && git merge dev
 git push origin main
 {{PROD_DEPLOY_COMMAND}}
 ```
 
 ---
 
-## Rollback Procedure
+## Rollback
 
-### Quick Rollback (< 5 min)
 ```bash
-#### Revert to previous deployment
+# Quick rollback (< 5 min)
 {{ROLLBACK_COMMAND}}
-```
 
-### Database Rollback
-```bash
-#### Only if migrations were run
+# Database rollback (only if migrations were run)
 {{DB_ROLLBACK_COMMAND}}
 ```
 
@@ -95,52 +117,38 @@ git push origin main
 
 ## Infrastructure
 
-### Services
-| Service | Provider | Config |
-|---------|----------|--------|
+| Service | Provider | Config location |
+|---------|----------|----------------|
 | Backend | {{BACKEND_HOST}} | `{{config_location}}` |
 | Frontend | {{FRONTEND_HOST}} | `{{config_location}}` |
 | Database | {{DB_HOST}} | `{{config_location}}` |
 | Cache | {{CACHE_HOST}} | `{{config_location}}` |
 
-### Environment Variables
-Managed via: {{ENV_MANAGEMENT}}
-
 ---
 
 ## Monitoring
 
-### Health Checks
-| Endpoint | Expected | Alert If |
+| Endpoint | Expected | Alert if |
 |----------|----------|----------|
 | `/health` | 200 | Non-200 for 1 min |
 | `/api/health` | 200 | Non-200 for 1 min |
 
-### Alerts
+Alerts:
 - Error rate > {{X}}%
-- Response time > {{Y}}ms
-- Memory usage > {{Z}}%
-
----
-
-## Secrets Management
-
-| Secret | Location | Rotation |
-|--------|----------|----------|
-| DB credentials | {{LOCATION}} | {{FREQUENCY}} |
-| API keys | {{LOCATION}} | {{FREQUENCY}} |
-| JWT secret | {{LOCATION}} | {{FREQUENCY}} |
+- p95 response time > {{Y}}ms
+- Memory > {{Z}}%
 
 ---
 
 ## Vibe Cost Reference
 
-| Deploy Task | Vibes |
-|-------------|-------|
+| Task | Vibes |
+|------|-------|
 | Standard deploy | 1–2 V |
-| Deploy with migration | 2–4 V |
+| Deploy + migration | 2–4 V |
 | Rollback | 1–2 V |
 | Incident response | 5–15 V |
+| Env rotation | 2–3 V |
 
 ---
 

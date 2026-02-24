@@ -6,8 +6,21 @@
 |----------|------|-------|
 | Global agent constitution (Tier-1) | `AGENTS.md` | `[CTO]` |
 | Project README | `README.md` | `[CTO]` |
+| Claude Code context | `CLAUDE.md` | `[CTO]` |
+| Internal handbook | `CODEX.md` | `[CTO]` |
 | Python config | `pyproject.toml` | `[CTO]` |
 | Git ignore | `.gitignore` | `[CTO]` |
+
+## Environment files
+
+| Artifact | Path | In git? |
+|----------|------|---------|
+| Master reference | `.env.example` | ✅ Yes |
+| Dev defaults | `.env.development` | ✅ Yes (no real values) |
+| Staging shape | `.env.staging` | ✅ Yes (no real values) |
+| Production shape | `.env.production` | ✅ Yes (no real values) |
+| Local values | `.env` | ❌ Never |
+| Local overrides | `.env.local` | ❌ Never |
 
 ## Windsurf rules
 
@@ -21,6 +34,7 @@
 | Context router | `.windsurf/rules/20_context_router.md` | `[CTO]` |
 | CTO role | `.windsurf/rules/role_cto.md` | `[CTO]` |
 | CPO role | `.windsurf/rules/role_cpo.md` | `[CPO]` |
+| UX/ARIA role | `.windsurf/rules/role_ux.md` | `[DESIGNER]` |
 | Backend dev role | `.windsurf/rules/role_backend_dev.md` | `[CTO]` |
 | Frontend dev role | `.windsurf/rules/role_frontend_dev.md` | `[CTO]` |
 | ML dev role | `.windsurf/rules/role_ml_dev.md` | `[CTO]` |

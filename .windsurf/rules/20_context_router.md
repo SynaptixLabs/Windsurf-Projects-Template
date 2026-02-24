@@ -15,7 +15,8 @@ Purpose: reduce "who am I?" confusion by inferring a default role from file path
 - `docs/05_DEPLOYMENT.md` → `[CTO]`
 - `docs/0l_DECISIONS.md` → `[CTO]` / `[CPO]` (joint)
 - `docs/release/**` → `[CTO]`
-- `docs/ui/**` → `[DESIGNER]` / `[DEV:*|FE]`
+- `docs/ui/**` → `[DESIGNER]` / `[UX]` / `[DEV:*|FE]`
+  - Use `@role_ux` for all UI/UX/design work
 - `docs/sprints/**/todo/**` → `[DEV:<module>|*]`
 - `docs/sprints/**/reports/**` → `[DEV:<module>|*]`
 
@@ -51,6 +52,7 @@ When inside `<domain>/modules/<module>/`:
 | `shared/**` | Shared Dev | `@role_shared_dev` |
 | Executive work | CTO | `@role_cto` |
 | Product work | CPO | `@role_cpo` |
+| UI/UX/design work | ARIA (UX Creative Agent) | `@role_ux` |
 
 ## Auto-read order reminder
 

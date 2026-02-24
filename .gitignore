@@ -3,11 +3,18 @@
 # ========================
 # Environment & Secrets
 # ========================
+# SAFE to commit: .env.example, .env.development, .env.staging, .env.production (shape only, no real values)
+# NEVER commit: .env, .env.local, .env.*.local (real values)
 .env
 .env.local
 .env.*.local
+# Uncomment below to also ignore the per-env shape files if your workflow uses secrets managers exclusively
+# .env.development
+# .env.staging
+# .env.production
 *.pem
 *.key
+*.secret
 
 # ========================
 # Python
