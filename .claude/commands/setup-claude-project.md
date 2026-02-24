@@ -1,4 +1,4 @@
-# /project:spawn-cto
+# /project:setup-claude-project — Generate Claude Projects System Prompt
 
 Generate a complete, paste-ready CTO agent for this project.
 
