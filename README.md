@@ -1,6 +1,13 @@
-# Windsurf Projects Template (SynaptixLabs)
+# synaptix-scaffold (SynaptixLabs Project Template)
 
-This repo is a **starter template** for bootstrapping (or upgrading) a SynaptixLabs-style Windsurf environment: **Rules + Roles + Agent tiers + Vibe Coding**.
+This repo is the **official SynaptixLabs bootstrap template** for any new project: Rules + Roles + Agent tiers + CTO Agent system + Vibe Coding methodology.
+
+**What it gives you in Sprint-0:**
+- A paste-ready **CTO agent** for Claude Projects (your AI technical conscience)
+- Windsurf/CLI execution rules for CTO, CPO, and all dev roles
+- Tiered `AGENTS.md` governance (workspace → project → module)
+- Structured `docs/` with PRD, architecture, modules, testing, deployment templates
+- `/project:spawn-cto` and 6 other slash commands for Claude Code CLI
 
 Once you instantiate a real project repo, this README is meant to be replaced by the project's real `README.md`.
 
@@ -24,19 +31,21 @@ This "Sprint-0" work is **strategic** and best done outside the IDE with a plann
 
 | # | Artifact | Status |
 |---|----------|--------|
-| 1 | Project `README.md` | ☐ |
-| 2 | Folder structure adapted | ☐ |
-| 3 | `docs/0k_PRD.md` filled | ☐ |
-| 4 | `docs/01_ARCHITECTURE.md` filled | ☐ |
-| 5 | `docs/03_MODULES.md` initial registry | ☐ |
-| 6 | `AGENTS.md` (Tier-1) customized | ☐ |
-| 7 | `.windsurf/rules/role_cto.md` customized | ☐ |
-| 8 | `.windsurf/rules/role_cpo.md` customized | ☐ |
-| 9 | `pyproject.toml` / `package.json` configured | ☐ |
-| 10 | Sprint-01 plan drafted | ☐ |
-| 11 | `CLAUDE.md` placeholders filled (Claude CLI context) | ☐ |
-| 12 | `.claude/settings.local.json` reviewed (add project-specific permissions) | ☐ |
-| 13 | `.claude/commands/` reviewed (all 6 commands work for this project) | ☐ |
+| 1 | **Run `/project:spawn-cto`** → get paste-ready CTO agent for Claude Projects | ☐ |
+| 2 | **Create Claude Project** → paste CTO system prompt + upload knowledge files | ☐ |
+| 3 | Project `README.md` written | ☐ |
+| 4 | Folder structure adapted to project type | ☐ |
+| 5 | `docs/0k_PRD.md` filled | ☐ |
+| 6 | `docs/01_ARCHITECTURE.md` filled | ☐ |
+| 7 | `docs/03_MODULES.md` initial registry | ☐ |
+| 8 | `AGENTS.md` (Tier-1) customized | ☐ |
+| 9 | `.windsurf/rules/role_cto.md` placeholders resolved (auto-done via spawn-cto) | ☐ |
+| 10 | `.windsurf/rules/role_cpo.md` customized | ☐ |
+| 11 | `pyproject.toml` / `package.json` configured | ☐ |
+| 12 | Sprint-01 plan drafted (ask the CTO agent) | ☐ |
+| 13 | `CLAUDE.md` placeholders filled | ☐ |
+| 14 | `.claude/settings.local.json` reviewed | ☐ |
+| 15 | All slash commands smoke-tested | ☐ |
 
 ---
 
@@ -117,6 +126,73 @@ Get-ChildItem -Recurse -Include *.md | Select-String "{{" | Select-Object Path, 
 ```bash
 grep -rn "{{" --include="*.md"
 ```
+
+---
+
+---
+
+## CTO Agent System (Step 1 of Vibe Coding)
+
+Every project starts with a **CTO agent** — the AI technical conscience that plans sprints, reviews code, and owns architecture decisions. This scaffold ships a complete CTO agent system out of the box.
+
+### The chain
+
+```
+CPTO (Avi's Claude Desktop — workspace level)
+  └── CTO_Agent_factory.md  ← workspace-level generator (synaptix-workspace/)
+        └── /project:spawn-cto  ← fills in this scaffold's templates
+              ├── docs/templates/CPTO_agent_TEMPLATE.md  → paste into Claude Projects
+              └── .windsurf/rules/role_cto.md            → active Windsurf/CLI rule
+```
+
+### How to activate for a new project (5 minutes)
+
+**Step 1 — Generate the CTO agent**
+```bash
+cd your-new-project
+claude
+/project:spawn-cto
+```
+Claude reads your PRD + architecture → outputs a fully filled system prompt.
+
+**Step 2 — Create a Claude Project**
+- Open [claude.ai/projects](https://claude.ai/projects) → New Project → name it `[ProjectName] CTO`
+- Paste the output from Step 1 as the **System Prompt**
+- Upload as Project Knowledge:
+  - `docs/0k_PRD.md`
+  - `docs/01_ARCHITECTURE.md`
+  - `docs/03_MODULES.md`
+  - `docs/04_TESTING.md`
+  - Current sprint index (if one exists)
+
+**Step 3 — First query**
+```
+What is our project?
+```
+The CTO agent responds with: project summary, architecture overview, sprint scope, top 3 risks, next action.
+
+**Step 4 — Plan Sprint 1**
+```
+Create the Sprint 01 plan. Output: sprint_index, dev_todo, qa_todo, and definition of done.
+```
+
+### What the CTO agent owns
+
+| Domain | What it does |
+|--------|-------------|
+| Architecture | Defines components, boundaries, data flow — flags one-way doors |
+| Sprint Execution | Translates PRD → Dev TODOs + QA TODOs (separate files) |
+| Quality Gates | Enforces TDD, coverage targets, E2E coverage, no-ship-without-tests |
+| Code Review | Good / Bad / Ugly → P0/P1/P2 fix list → APPROVE / REVISE / REJECT |
+| Technical Decisions | Records ADRs, proposes to FOUNDER, never decides irreversible things alone |
+
+### Files in this scaffold
+
+| File | Purpose |
+|------|---------|
+| `.windsurf/rules/role_cto.md` | CTO execution rule for Windsurf/CLI — fill placeholders via spawn-cto |
+| `docs/templates/CPTO_agent_TEMPLATE.md` | Claude Projects system prompt template — paste-ready after spawn-cto |
+| `.claude/commands/spawn-cto.md` | `/project:spawn-cto` — generates both files above, project-specific |
 
 ---
 
@@ -253,6 +329,7 @@ This template is **dual-native**: it works with both Windsurf (IDE) and Claude C
 |------|---------|
 | `CLAUDE.md` | Project context auto-loaded by Claude CLI on session start. Fill in `{{PLACEHOLDERS}}` during Sprint-0. |
 | `.claude/settings.local.json` | Pre-configured tool permissions (allow/deny). Add project-specific commands during Sprint-0. |
+| `.claude/commands/spawn-cto.md` | `/project:spawn-cto` — **generate CTO agent** (Claude Projects prompt + role_cto patch) |
 | `.claude/commands/test.md` | `/project:test` — full test suite runner |
 | `.claude/commands/e2e.md` | `/project:e2e` — Playwright MCP browser tests |
 | `.claude/commands/plan.md` | `/project:plan` — force plan mode before complex work |
@@ -388,7 +465,7 @@ Windsurf-Projects-Template/
 │   ├── 01_artifact_paths.md    # File registry
 │   ├── 10_module_agent_permissions.md
 │   ├── 20_context_router.md    # Path-to-role mapping
-│   ├── role_cto.md             # CTO role + pre-release checklist
+│   ├── role_cto.md             # CTO role — 5 domains, sprint plan template, Good/Bad/Ugly
 │   ├── role_cpo.md             # CPO role
 │   ├── role_backend_dev.md     # Backend dev role (NEW)
 │   ├── role_frontend_dev.md    # Frontend dev role (NEW)
@@ -409,8 +486,9 @@ Windsurf-Projects-Template/
 │   ├── 0l_DECISIONS.md         # Decision log
 │   ├── ui/UI_KIT.md            # Design system
 │   └── templates/
-│       ├── module_AGENTS_TEMPLATE.md  # Tier-3 generator (NEW)
-│       └── sprints/            # Sprint templates
+│       ├── CPTO_agent_TEMPLATE.md     # CTO Claude Projects system prompt (NEW)
+│       ├── module_AGENTS_TEMPLATE.md  # Tier-3 generator
+│       └── sprints/                   # Sprint templates
 ├── backend/
 │   ├── AGENTS.md               # Tier-2 + CLI auto-registration
 │   └── modules/_example/       # Reference implementation
@@ -494,4 +572,4 @@ If you find improvements while using this template:
 
 ---
 
-*Last updated: 2025-01-12* | See [CHANGELOG.md](CHANGELOG.md) for version history
+*Last updated: 2026-02-24* | See [CHANGELOG.md](CHANGELOG.md) for version history
